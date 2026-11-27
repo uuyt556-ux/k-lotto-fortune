@@ -362,13 +362,19 @@
     var bands = {};
     nums.forEach(function (n) { bands[Math.min(3, Math.floor((n - 1) / 10))] = 1; });
     var bandCount = Object.keys(bands).length;
+    /* 한 오행(끝수)에 번호가 몰리지 않게: 4개 이상이면 감점 */
+    var elCount = {};
+    nums.forEach(function (n) { var e = numElem(n); elCount[e] = (elCount[e] || 0) + 1; });
+    var maxEl = 0;
+    ELEMS.forEach(function (e) { maxEl = Math.max(maxEl, elCount[e] || 0); });
     var score = 0;
+    if (maxEl <= 3) score += 2; else score -= 2;
     if (sum >= 100 && sum <= 175) score += 3;
     if (sum >= 115 && sum <= 155) score += 2;
     if (odd >= 2 && odd <= 4) score += 2;
     if (consec <= 2) score += 2;
     if (bandCount >= 4) score += 2; else if (bandCount === 3) score += 1;
-    var ok = sum >= 95 && sum <= 180 && odd >= 2 && odd <= 4 && consec <= 2 && bandCount >= 3;
+    var ok = sum >= 95 && sum <= 180 && odd >= 2 && odd <= 4 && consec <= 2 && bandCount >= 3 && maxEl <= 3;
     return { ok: ok, sum: sum, odd: odd, even: 6 - odd, consec: consec, bands: bandCount, score: score };
   }
 
