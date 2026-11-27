@@ -386,9 +386,10 @@
       lackingList.push(second);
     }
     var lacking = lackingList[0], lacking2 = lackingList[1];
+    var isGuest = !saju;
     var lackingPool = [];
     lackingList.forEach(function (e) { ELEM_NUMS[e].forEach(function (n) { if (lackingPool.indexOf(n) < 0) lackingPool.push(n); }); });
-    var lackTag = "부족 " + ELEM_H[lacking] + " 보완";
+    var lackTag = isGuest ? "오늘 " + ELEM_H[lacking] + " 기운" : "부족 " + ELEM_H[lacking] + " 보완";
     var dayEl = today.branchEl;
     var myEl = saju ? saju.dayEl : dayEl;
 
@@ -406,7 +407,7 @@
 
     /* 무료 기본 조합 */
     var free = pickValid(seedBase, defs[0].pools, defs[0].need, null);
-    free = { id: 0, title: "부족 " + ELEM_H[lacking] + " 보완형", nums: free.nums, tags: free.tags, q: free.q, desc: comboDesc(0, lacking, dayEl) };
+    free = { id: 0, title: (isGuest ? "오늘 일진 기본형" : "부족 " + ELEM_H[lacking] + " 보완형"), nums: free.nums, tags: free.tags, q: free.q, desc: comboDesc(0, lacking, dayEl, isGuest) };
 
     /* 황금 5조합 — 무료 조합과 겹치지 않게, 조합끼리도 2번 이상 겹치지 않게 */
     var avoid = {};
@@ -415,7 +416,7 @@
     defs.forEach(function (d, i) {
       var r = pickValid(seedBase + 50021 + i * 7919, d.pools, d.need, avoid);
       r.nums.forEach(function (n) { avoid[n] = (avoid[n] || 0) + 1; });
-      out.push({ id: i, title: STYLE_TITLE[i], nums: r.nums, tags: r.tags, q: r.q, desc: comboDesc(i, lacking, dayEl) });
+      out.push({ id: i, title: STYLE_TITLE[i], nums: r.nums, tags: r.tags, q: r.q, desc: comboDesc(i, lacking, dayEl, isGuest) });
     });
 
     /* 혹시 같은 조합이 나오면 한 번 더 */
@@ -433,8 +434,9 @@
     return { fortune: f, combos: out, free: free, stats: { hot: hot.slice(0, 6), cold: cold.slice(0, 6), s10: st10, s30: st30 } };
   }
 
-  function comboDesc(i, lacking, dayEl) {
+  function comboDesc(i, lacking, dayEl, isGuest) {
     var a = ELEM_H[lacking] + " 기운을 채우는 수리";
+    if (i === 0 && isGuest) return "오늘 일진 " + ELEM_H[dayEl] + "의 기운과 최근 회차의 흐름을 섞었습니다.";
     if (i === 0) return a + "를 중심으로, 오늘 " + ELEM_H[dayEl] + " 기운과 최근 흐름을 섞었습니다.";
     if (i === 1) return "오늘 일진 " + ELEM_H[dayEl] + "의 기운을 앞세우고 부족한 " + ELEM_H[lacking] + "를 뒤에서 받쳐 주는 조합입니다.";
     if (i === 2) return "최근 10회 동안 나오지 않은 번호로 때를 기다린 자리를 채웠습니다.";
@@ -445,10 +447,10 @@
   /* ───────── 태그를 사람 말로 ───────── */
   function reasonText(tag, n) {
     var last = n % 10, el = numElem(n), H = ELEM_H[el];
-    if (tag.indexOf("보완") >= 0) return "끝수 " + last + " · " + H + "(" + el + ") 수리로 부족한 " + el + " 기운을 채웁니다";
+    if (tag.indexOf("보완") >= 0) return "끝수 " + last + " · " + H + "(" + el + ") 수리로 " + el + " 기운을 채웁니다";
     if (tag.indexOf("오늘") >= 0) return "끝수 " + last + " · 오늘 일진의 " + H + "(" + el + ") 기운을 그대로 받습니다";
     if (tag.indexOf("미출현") >= 0) return "최근 10회 동안 나오지 않은 번호 — 때를 기다리던 자리입니다";
-    if (tag.indexOf("다출") >= 0) return "최근 30회 안에 여러 번 나온 번호 — 지금의 흐름을 따릅니다";
+    if (tag.indexOf("다출") >= 0) return "최근 회차에서 여러 번 나온 번호 — 지금의 흐름을 따릅니다";
     if (tag.indexOf("일간") >= 0) return "일간(나)의 " + H + "(" + el + ") 수리와 끝수가 맞습니다";
     return "합계·홀짝·구간의 균형을 맞춘 자리입니다";
   }

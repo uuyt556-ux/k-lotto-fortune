@@ -320,9 +320,18 @@
   }
 
   /* ───── 저장한 번호 ───── */
+  function savedDate(item) {
+    var d = new Date(item.at);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  /* 저장한 날 이후에 추첨된 회차와만 대조한다 (그 전 회차는 내 번호가 아니다) */
+  function drawsAfter(item) {
+    var from = savedDate(item);
+    return state.data.draws.filter(function (d) { return d.date > from; });
+  }
   function bestRank(item) {
     var best = null;
-    state.data.draws.forEach(function (draw) {
+    drawsAfter(item).forEach(function (draw) {
       var r = Saju.winRank(item.nums, draw);
       if (r && r.rank > 0 && (!best || r.rank < best.rank)) best = Object.assign({}, r, { epsd: draw.epsd });
     });
@@ -339,7 +348,9 @@
       var br = bestRank(s);
       var dt = new Date(s.at);
       var when = pad(dt.getMonth() + 1) + "." + pad(dt.getDate());
-      var badge = br ? '<span class="rank win">' + br.epsd + "회 " + br.label + "</span>" : '<span class="rank">낙첨</span>';
+      var checked = drawsAfter(s).length > 0;
+      var badge = br ? '<span class="rank win">' + br.epsd + "회 " + br.label + "</span>"
+        : '<span class="rank">' + (checked ? "낙첨" : "발표 전") + "</span>";
       return '<div class="saved-item"><span class="when">' + when + "</span>" +
         '<span class="nums">' + s.nums.map(pad).join(" · ") + "</span>" + badge +
         '<button class="del" data-del="' + s.id + '" aria-label="삭제">×</button></div>';
@@ -481,11 +492,14 @@
 
     $("#checkBtn").addEventListener("click", function () {
       var latest = state.data.draws[0];
-      if (!latest) return;
-      var winners = state.saved.filter(function (s) { return Saju.winRank(s.nums, latest).rank > 0; });
       if (!state.saved.length) { toast("먼저 번호를 저장해 주세요"); return; }
-      if (winners.length) toast(latest.epsd + "회 기준 " + winners.length + "조합 당첨!");
-      else toast(latest.epsd + "회 기준 당첨 조합이 없습니다");
+      if (!latest) return;
+      var pending = state.saved.filter(function (s) { return !drawsAfter(s).length; });
+      var checked = state.saved.filter(function (s) { return drawsAfter(s).length; });
+      var winners = checked.filter(function (s) { return Saju.winRank(s.nums, latest).rank > 0; });
+      if (!checked.length) toast("저장한 번호는 다음 추첨(토요일) 후에 확인할 수 있습니다");
+      else if (winners.length) toast(latest.epsd + "회 기준 " + winners.length + "조합 당첨!");
+      else toast(latest.epsd + "회 기준 당첨 조합이 없습니다" + (pending.length ? " · 발표 전 " + pending.length + "조합" : ""));
       renderSaved();
     });
 
