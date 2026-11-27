@@ -1,8 +1,9 @@
 /* 운명 로또 — K-사주 로또
-   Service Worker: 앱 셸 오프라인 캐시 + 회차 데이터 네트워크 우선
+   Service Worker: 네트워크 우선 + 오프라인 캐시
+   (앱을 자주 고치므로 캐시 우선 대신 네트워크를 먼저 확인하고, 끊겼을 때만 캐시를 씁니다)
    GitHub Pages 하위 경로(/k-lotto-fortune/)에서도 동작하도록 상대 경로 사용 */
 
-var CACHE = 'unmyeong-lotto-v1';
+var CACHE = 'unmyeong-lotto-v2';
 var SHELL = [
   './',
   './index.html',
@@ -43,30 +44,23 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET') return;
+
   var url = new URL(req.url);
   if (url.origin !== location.origin) return; // 폰트 등 외부 리소스는 그대로
 
-  /* 회차 데이터는 항상 최신을 먼저 시도하고, 실패하면 캐시 사용 */
-  if (url.pathname.indexOf('/lotto.json') >= 0) {
-    event.respondWith(
-      fetch(req).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE).then(function (c) { c.put(req, copy); });
-        return res;
-      }).catch(function () { return caches.match(req); })
-    );
-    return;
-  }
-
-  /* 앱 셸: 캐시 우선 + 뒤에서 갱신 */
   event.respondWith(
-    caches.match(req).then(function (hit) {
-      var network = fetch(req).then(function (res) {
+    fetch(req).then(function (res) {
+      if (res && res.ok) {
         var copy = res.clone();
         caches.open(CACHE).then(function (c) { c.put(req, copy); });
-        return res;
-      }).catch(function () { return hit; });
-      return hit || network;
+      }
+      return res;
+    }).catch(function () {
+      return caches.match(req).then(function (hit) {
+        if (hit) return hit;
+        if (req.mode === 'navigate') return caches.match(scopeUrl('./index.html'));
+        return new Response('오프라인 상태입니다.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      });
     })
   );
 });
