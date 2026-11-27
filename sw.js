@@ -3,16 +3,16 @@
    (앱을 자주 고치므로 캐시 우선 대신 네트워크를 먼저 확인하고, 끊겼을 때만 캐시를 씁니다)
    GitHub Pages 하위 경로(/k-lotto-fortune/)에서도 동작하도록 상대 경로 사용 */
 
-var CACHE = 'unmyeong-lotto-v2';
+var CACHE = 'unmyeong-lotto-v3';
 var SHELL = [
   './',
   './index.html',
   './manifest.json',
   './privacy.html',
-  './style.css',
-  './lunar.js',
-  './saju.js',
-  './app.js',
+  './style.css?v=2',
+  './lunar.js?v=2',
+  './saju.js?v=2',
+  './app.js?v=2',
   './icon-192.png',
   './icon-512.png',
   './apple-touch-icon.png',
