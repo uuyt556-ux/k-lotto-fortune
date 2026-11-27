@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "운명 로또 — K-사주 로또",
+  "short_name": "운명로또",
+  "description": "생년월일과 오늘의 기운(사주·오행)으로 로또 6/45 번호를 고르는 앱. 최신 회차 조회와 내 번호 당첨 확인.",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1E1B18",
+  "background_color": "#FBF7EE",
+  "categories": ["lifestyle", "entertainment", "utilities"],
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

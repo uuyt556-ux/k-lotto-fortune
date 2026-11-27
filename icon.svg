@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="운명 로또 아이콘">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#FFFDF6"/>
+      <stop offset="55%" stop-color="#FBF3E2"/>
+      <stop offset="100%" stop-color="#F0E2C6"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F2DCA0"/>
+      <stop offset="38%" stop-color="#D8A93F"/>
+      <stop offset="70%" stop-color="#B07E1B"/>
+      <stop offset="100%" stop-color="#E7C87A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="lattice" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M0 32h64M32 0v64" stroke="#C9972C" stroke-width="2" opacity="0.18" fill="none"/>
+      <rect x="12" y="12" width="40" height="40" stroke="#C9972C" stroke-width="2" opacity="0.12" fill="none"/>
+    </pattern>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#paper)"/>
+  <rect width="512" height="512" rx="112" fill="url(#lattice)"/>
+  <circle cx="256" cy="216" r="190" fill="url(#glow)"/>
+
+  <!-- 엽전 -->
+  <circle cx="256" cy="262" r="150" fill="none" stroke="url(#gold)" stroke-width="15"/>
+  <circle cx="256" cy="262" r="166" fill="none" stroke="#C9972C" stroke-width="2" opacity="0.35"/>
+  <rect x="208" y="214" width="96" height="96" rx="10" fill="#1E1B18"/>
+  <rect x="216" y="222" width="80" height="80" rx="6" fill="none" stroke="#E7C87A" stroke-width="2" opacity="0.5"/>
+
+  <!-- 오행 점 -->
+  <circle cx="256" cy="112" r="9" fill="#2B6E6C"/>
+  <circle cx="398" cy="186" r="9" fill="#B83B2A"/>
+  <circle cx="344" cy="378" r="9" fill="#A97B33"/>
+  <circle cx="168" cy="378" r="9" fill="#8C8676"/>
+  <circle cx="114" cy="186" r="9" fill="#2E4A6B"/>
+
+  <!-- 낙관 -->
+  <g transform="translate(372 44) rotate(7)">
+    <rect width="86" height="86" rx="14" fill="#B83B2A"/>
+    <rect x="7" y="7" width="72" height="72" rx="9" fill="none" stroke="#FFF3E2" stroke-width="3" opacity="0.85"/>
+    <text x="43" y="60" font-family="'Nanum Myeongjo','Noto Serif KR',serif" font-size="44" font-weight="700" fill="#FFF6E8" text-anchor="middle">運</text>
+  </g>
+
+  <!-- 여섯 번호 -->
+  <g>
+    <circle cx="158" cy="462" r="17" fill="#F5BE2E"/>
+    <circle cx="196" cy="462" r="17" fill="#57B9EA"/>
+    <circle cx="234" cy="462" r="17" fill="#F26A6A"/>
+    <circle cx="272" cy="462" r="17" fill="#A6A6A6"/>
+    <circle cx="310" cy="462" r="17" fill="#A3CB3C"/>
+    <circle cx="348" cy="462" r="17" fill="#C9972C"/>
+  </g>
+</svg>
