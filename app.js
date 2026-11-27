@@ -413,6 +413,7 @@
     state.unlocked = true;
     store(LS.unlock, { date: state.todayKey });
     renderNumbers();
+    document.dispatchEvent(new CustomEvent("unmyeong:unlocked"));
     toast("5조합과 리포트가 열렸습니다");
     var el = $("#numbers");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -451,6 +452,7 @@
     renderNumbers();
     if (window.Premium) window.Premium.render();
     $("#sajuResult").scrollIntoView({ behavior: "smooth", block: "center" });
+    document.dispatchEvent(new CustomEvent("unmyeong:saju"));
   }
 
   function restoreSaju(saved) {
@@ -592,7 +594,8 @@
     analysis: function () { return state.analysis; },
     draws: function () { return (state.data && state.data.draws) || []; },
     birthKey: function () { return state.birth ? state.birth.key : ""; },
-    birth: function () { return state.birth; }
+    birth: function () { return state.birth; },
+    fortune: function () { return state.f || null; }
   };
 
   document.addEventListener("DOMContentLoaded", function () {

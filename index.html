@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#1E1B18" />
-<meta name="description" content="생년월일과 오늘의 기운(사주·오행)으로 로또 6/45 번호를 고르는 K-사주 로또. 무료로 시작하고 월간·연간·VIP 멤버십으로 광고 없이 매일 황금 5조합과 심층 사주 리포트를 받아 보세요." />
+<meta name="description" content="생년월일과 오늘의 기운(사주·오행)으로 로또 6/45 번호를 고르는 K-사주 로또. 웹툰 점술사가 성별에 맞춰 오늘의 사주를 풀어 주고, 무료로 시작해 월간·연간·VIP 멤버십으로 광고 없이 매일 황금 5조합과 심층 사주 리포트를 받아 보세요." />
 <meta name="robots" content="index,follow" />
 <meta property="og:title" content="운명 로또 — K-사주 로또" />
 <meta property="og:description" content="오늘의 기운과 내 사주로 고르는 6/45. 번호마다 이유가 있습니다." />
@@ -17,7 +17,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=4" />
+<link rel="stylesheet" href="style.css?v=5" />
+<link rel="stylesheet" href="webtoon.css?v=5" />
 </head>
 <body>
 
@@ -64,6 +65,34 @@
       </div>
       <div class="hero-note" id="todayNote">생년월일을 넣으면 오늘의 기운을 내 사주와 함께 읽어 드립니다.</div>
       <div class="hero-chips" id="todayChips"></div>
+      <button type="button" class="wt-hero-btn" data-wt-open>
+        <b>占</b> 오늘의 웹툰 점사 듣기 <span aria-hidden="true">→</span>
+      </button>
+    </section>
+
+    <!-- 웹툰 점집 (성별 맞춤 점술사) -->
+    <section id="webtoon" class="card wt-card" aria-labelledby="wt-title">
+      <div class="card-head">
+        <span class="hanja">占</span>
+        <h2 id="wt-title">웹툰 점집</h2>
+        <span class="right" id="wtRole">미녀 점술사 · 설아</span>
+      </div>
+
+      <div class="seg wt-seg" role="group" aria-label="점술사 캐릭터 선택">
+        <button type="button" data-teller="male" class="on">미녀 점술사</button>
+        <button type="button" data-teller="female">점집 미소년</button>
+      </div>
+
+      <div class="wt-stage" id="wtStage"></div>
+
+      <div class="wt-ctl">
+        <button type="button" class="wt-round" data-wt-prev aria-label="이전 대사">‹</button>
+        <div class="wt-dots" id="wtDotsInline" aria-hidden="true"></div>
+        <button type="button" class="wt-round wt-round-next" data-wt-next aria-label="다음 대사">›</button>
+        <button type="button" class="wt-mini" data-wt-open>크게 보기</button>
+      </div>
+      <label class="wt-auto"><input type="checkbox" data-wt-auto id="wtAutoInline" /> 자동 재생</label>
+      <div class="wt-cta" id="wtCtaInline" hidden></div>
     </section>
 
     <!-- 사주 입력 -->
@@ -81,6 +110,14 @@
             <button type="button" data-cal="solar" class="on">양력</button>
             <button type="button" data-cal="lunar">음력</button>
           </div>
+        </div>
+        <div class="field">
+          <label>내 성별 <span class="opt">점술사 캐릭터</span></label>
+          <div class="seg" role="group" aria-label="내 성별 선택">
+            <button type="button" data-gender="male" class="on">남성</button>
+            <button type="button" data-gender="female">여성</button>
+          </div>
+          <div class="hint">남성을 고르면 미녀 점술사가, 여성을 고르면 점집 미소년이 사주를 풀어 드립니다.</div>
         </div>
         <div class="field">
           <label for="birthDate">생년월일</label>
@@ -245,7 +282,7 @@
     </div>
 
     <footer class="foot">
-      운명 로또 · K-사주 로또 v1.1<br />
+      운명 로또 · K-사주 로또 v1.2<br />
       <a href="./privacy.html">개인정보처리방침</a> · <a href="#today">맨 위로</a><br />
       © 2026 운명 로또
     </footer>
@@ -304,6 +341,37 @@
     <button type="button" class="btn btn-gold" id="adDone" disabled>광고 시청 중…</button>
     <button type="button" class="btn btn-ghost" id="adCancel" style="margin-top:8px">닫기</button>
     <p class="tiny">웹 데모용 모의 광고입니다. 앱 출시 시 AdMob 보상형 광고로 교체됩니다.</p>
+  </div>
+</div>
+
+<!-- 웹툰 점사 컷신 (크게 보기) -->
+<div class="modal-back cut-back" id="cutModal" role="dialog" aria-modal="true" aria-labelledby="cutTitle">
+  <div class="cut-sheet">
+    <div class="cut-top">
+      <span class="cut-badge" aria-hidden="true">占</span>
+      <div class="cut-title">
+        <b id="cutTitle">오늘의 점사</b>
+        <span id="cutRole">미녀 점술사 · 설아</span>
+      </div>
+      <button type="button" class="cut-x" data-wt-close aria-label="점사 닫기">×</button>
+    </div>
+
+    <div class="wt-stage cut-stage" id="cutStage"></div>
+
+    <div class="cut-bar">
+      <div class="seg cut-seg" role="group" aria-label="점술사 캐릭터 선택">
+        <button type="button" data-teller="male" class="on">미녀 점술사</button>
+        <button type="button" data-teller="female">점집 미소년</button>
+      </div>
+      <div class="wt-ctl">
+        <button type="button" class="wt-round" data-wt-prev aria-label="이전 대사">‹</button>
+        <div class="wt-dots" id="cutDots"></div>
+        <button type="button" class="wt-round wt-round-next" data-wt-next aria-label="다음 대사">›</button>
+      </div>
+      <label class="wt-auto"><input type="checkbox" id="cutAuto" data-wt-auto /> 자동 재생</label>
+      <div class="wt-cta" id="cutCta" hidden></div>
+      <p class="wt-note">재미로 보는 사주 점사입니다 · 당첨을 보장하지 않아요</p>
+    </div>
   </div>
 </div>
 
@@ -391,10 +459,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lunar.js?v=4"></script>
-<script src="saju.js?v=4"></script>
-<script src="account.js?v=4"></script>
-<script src="premium.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="lunar.js?v=5"></script>
+<script src="saju.js?v=5"></script>
+<script src="account.js?v=5"></script>
+<script src="premium.js?v=5"></script>
+<script src="webtoon.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
