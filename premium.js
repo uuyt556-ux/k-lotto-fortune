@@ -330,8 +330,9 @@
           ? "기운이 강한 편이라 " + H[o.yong] + "으로 흘려보내고 " + H[o.hee] + "으로 결실을 챙기는 흐름이 좋습니다."
           : "기운이 약한 편이라 " + H[o.yong] + "으로 나를 받쳐 주고 " + H[o.hee] + "으로 힘을 보태는 흐름이 좋습니다.") +
           " 색은 " + COLOR_TXT[o.yong] + ", 방위는 " + DIR_TXT[o.yong] + ", 시간은 " + TIME_TXT[o.yong] + "입니다.</p>" +
-        "<p><b>재물 습관</b> — " + H[o.yong] + "의 기운이 도는 때에 " + ACT_TXT[o.yong] + "를 하면 흐름이 붙습니다. 구매·계약처럼 되돌리기 어려운 일은 " + H[o.gi] + "의 기운이 강한 날을 피하세요.</p>" +
-        "<p><b>번호 활용</b> — 끝수 <b>" + LAST[o.yong].join("·") + "</b>(" + H[o.yong] + ")와 <b>" + LAST[o.hee].join("·") + "</b>(" + H[o.hee] + ")를 중심으로, 오늘 일진 끝수 " + LAST[TODAY_GZ.branchEl].join("·") + "를 1~2개 섞는 구성이 내 사주와 가장 잘 맞습니다.</p>" +
+        "<p><b>재물 습관</b> — " + H[o.yong] + "의 기운이 도는 때에 " + ACT_TXT[o.yong] + " 같은 일을 하면 흐름이 붙습니다. 구매·계약처럼 되돌리기 어려운 일은 " + H[o.gi] + "의 기운이 강한 날을 피하세요.</p>" +
+        "<p><b>번호 활용</b> — 끝수 <b>" + LAST[o.yong].join("·") + "</b>(" + H[o.yong] + ")와 <b>" + LAST[o.hee].join("·") + "</b>(" + H[o.hee] + ")를 중심으로, 오늘 일진 끝수 " + LAST[TODAY_GZ.branchEl].join("·") + "를 1~2개 섞는 구성이 내 사주와 가장 잘 맞습니다." +
+          (a.lacking.length ? " 사주에 없는 <b>" + a.lacking.map(function (e) { return H[e]; }).join("·") + "</b>(끝수 " + a.lacking.map(function (e) { return LAST[e].join("·"); }).join(" / ") + ")은 보조 기운으로 함께 쓰면 좋습니다." : "") + "</p>" +
         "<p><b>피해야 할 숫자</b> — 끝수 <b class='el-" + o.gi + "'>" + LAST[o.gi].join("·") + "</b> (" + H[o.gi] + " · 기신). 이 끝수 번호는 10조합에서 자동으로 가중치를 낮춥니다.</p>" +
       "</div>" +
       '<div class="chip-line">' +

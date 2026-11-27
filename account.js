@@ -20,6 +20,13 @@
   };
 
   /* ───────── 요금제 정의 (서버 상품 ID와 1:1로 맞출 것) ───────── */
+  var VIP_FEATURES = [
+    "연간 회원 혜택 전체",
+    "1:1 맞춤 사주 오행 심층 리포트 (용신·희신)",
+    "특별 10조합 생성 (고정수·제외수 필터)",
+    "명당 기운 길일 알림 · VIP 금박 테마"
+  ];
+
   var PLANS = {
     monthly: {
       id: "monthly", tier: "monthly", name: "월간 회원", hanja: "月",
@@ -43,21 +50,12 @@
     vip_monthly: {
       id: "vip_monthly", tier: "vip", name: "VIP 회원", hanja: "貴",
       price: 4900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "VIP",
-      features: [
-        "연간 혜택 전체",
-        "1:1 맞춤 사주 오행 심층 리포트 (용신·희신)",
-        "특별 10조합 생성 (고정수·제외수 필터)",
-        "명당 기운 길일 알림 · VIP 금박 테마"
-      ]
+      features: VIP_FEATURES
     },
     vip_lifetime: {
       id: "vip_lifetime", tier: "vip", name: "VIP 평생", hanja: "永",
       price: 49000, unit: "원 / 1회", cycle: "평생 이용 · 자동갱신 없음", months: 0, autoRenew: false, badge: "VIP",
-      features: [
-        "VIP 혜택 전체를 평생 이용",
-        "추가 결제·자동갱신 없음",
-        "1회 결제로 영구 사용"
-      ]
+      features: VIP_FEATURES.concat(["추가 결제·자동갱신 없음"])
     }
   };
 
@@ -372,7 +370,7 @@
       ]
     };
     box.innerHTML =
-      planCard(free, { now: t === "free" }) +
+      planCard(free, { now: !!currentUser() && t === "free" }) +
       planCard(PLANS.monthly, { now: rawSub() && rawSub().plan === "monthly" }) +
       planCard(PLANS.annual, { now: rawSub() && rawSub().plan === "annual" }) +
       vipCard();
@@ -698,7 +696,7 @@
     renderMemberBar();
     renderPlans();
     var hint = $("#savedLimitHint");
-    if (hint) hint.textContent = "내 번호 저장 " + limitText() + (saveLimit() ? " · 멤버십에서 늘릴 수 있어요" : " · 무제한");
+    if (hint) hint.textContent = "내 번호 저장 " + limitText() + (saveLimit() ? " · 멤버십에서 늘릴 수 있어요" : "");
   }
 
   function emit() {
