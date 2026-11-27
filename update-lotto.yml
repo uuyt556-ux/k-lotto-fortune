@@ -1,0 +1,39 @@
+name: 로또 회차 갱신
+
+on:
+  schedule:
+    # 매주 토요일 21:20 KST (= 12:20 UTC). 추첨은 20:35 KST, 결과 발표 후 여유를 둔다.
+    - cron: '20 12 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-lotto
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 동행복권 회차 수집
+        run: python3 scripts/fetch_lotto.py --rounds 100
+
+      - name: 변경 시 커밋
+        run: |
+          if git diff --quiet -- lotto.json; then
+            echo "변경된 회차가 없습니다."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lotto.json
+          git commit -m "chore: 로또 회차 데이터 갱신 ($(TZ=Asia/Seoul date +%Y-%m-%d))"
+          git push
