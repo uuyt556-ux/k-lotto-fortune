@@ -73,6 +73,7 @@ python3 scripts/fetch_lotto.py --rounds 100
   - `...?srchDir=older&srchCursorLtEpsd=<회차>` 로 10회씩 과거 수집
 - 서버가 응답하지 않으면 **기존 `lotto.json`을 유지하고 종료 코드 1**로 끝납니다. 앱은 내장 폴백 데이터로 계속 동작합니다.
 - GitHub Actions(`.github/workflows/update-lotto.yml`)가 매주 토요일 21:20(KST)에 자동 실행하고, 변경이 있으면 커밋합니다. 저장소 **Actions** 탭에서 수동 실행도 가능합니다.
+- ⚠️ 동행복권은 해외·데이터센터 IP를 막는 경우가 있습니다. GitHub Actions 러너에서 접속이 막히면 스크립트는 **기존 데이터를 유지하고 실패(exit 1)** 로 끝나며, 앱은 정상 동작합니다. 이때는 국내 네트워크에서 `python3 scripts/fetch_lotto.py --rounds 100` 을 실행해 갱신하면 됩니다. (2026-11-27 저장된 100회는 국내 네트워크에서 수집)
 
 ## 수익화 구조
 
