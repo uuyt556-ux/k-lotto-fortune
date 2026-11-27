@@ -196,13 +196,19 @@
 
   /* ───── 번호 카드 ───── */
   function saveCombo(combo) {
+    var limit = window.Membership ? window.Membership.saveLimit() : 0;
+    if (limit && state.saved.length >= limit) {
+      toast("내 번호는 " + limit + "개까지 저장됩니다 · 멤버십에서 늘릴 수 있어요");
+      return false;
+    }
     var nums = combo.nums.slice();
     var exists = state.saved.some(function (s) { return s.nums.join(",") === nums.join(","); });
-    if (exists) { toast("이미 저장한 조합입니다"); return; }
+    if (exists) { toast("이미 저장한 조합입니다"); return false; }
     state.saved.unshift({ id: Date.now() + "-" + Math.floor(Math.random() * 999), nums: nums, title: combo.title, at: new Date().toISOString() });
     store(LS.saved, state.saved);
     renderSaved();
     toast("내 번호에 저장했습니다");
+    return true;
   }
 
   function comboCard(combo, i, gold) {
@@ -229,7 +235,9 @@
     state.rec = rec;
     $("#comboFree").innerHTML = comboCard(rec.free, 0, false);
 
-    var unlocked = state.unlocked;
+    /* 월간 이상이면 광고 없이 즉시 열립니다 */
+    var paid = !!(window.Membership && window.Membership.has("goldInstant"));
+    var unlocked = paid || state.unlocked;
     $("#comboLock").hidden = unlocked;
     $("#comboPaid").hidden = !unlocked;
     if (unlocked) {
@@ -293,9 +301,10 @@
         var combo;
         if (id.charAt(0) === "f") combo = state.rec.free;
         else combo = state.rec.combos[parseInt(id.slice(1), 10)];
-        saveCombo(combo);
-        btn.classList.add("saved");
-        btn.textContent = "저장됨";
+        if (saveCombo(combo)) {
+          btn.classList.add("saved");
+          btn.textContent = "저장됨";
+        }
       });
     });
   }
@@ -440,6 +449,7 @@
     renderSaju();
     renderToday();
     renderNumbers();
+    if (window.Premium) window.Premium.render();
     $("#sajuResult").scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
@@ -518,17 +528,21 @@
     });
 
     /* 하단 내비 현재 위치 표시 */
-    var sections = ["today", "saju", "numbers", "saved"];
+    var sectionMap = {
+      today: "today", saju: "saju", numbers: "numbers", saved: "saved",
+      tencombos: "membership", deep: "membership", calendar: "membership", lucky: "membership", membership: "membership"
+    };
     var links = $$(".nav a");
     if ("IntersectionObserver" in window) {
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
           if (en.isIntersecting) {
-            links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-target") === en.target.id); });
+            var tgt = sectionMap[en.target.id];
+            links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-target") === tgt); });
           }
         });
       }, { rootMargin: "-30% 0px -55% 0px" });
-      sections.forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
+      Object.keys(sectionMap).forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
     }
   }
 
@@ -544,6 +558,42 @@
         $("#dataMeta").textContent = "출처: 내장 데이터 (동행복권 최근 회차) · 서버 데이터를 불러오지 못했습니다";
       });
   }
+
+  /* ───── 등급(멤버십) 연동 ───── */
+  function renderTierUI() {
+    var paid = !!(window.Membership && window.Membership.has("noAds"));
+    var bar = $("#adbar");
+    if (bar) {
+      if (paid) {
+        bar.style.display = "none";
+      } else {
+        var closed = false;
+        try { closed = sessionStorage.getItem(LS.adbar) === "1"; } catch (e) {}
+        bar.style.display = closed ? "none" : "";
+      }
+    }
+    document.body.classList.toggle("vip-theme", !!(window.Membership && window.Membership.has("vipTheme")));
+  }
+
+  document.addEventListener("unmyeong:tier", function () {
+    renderTierUI();
+    renderNumbers();
+    renderSaved();
+    if (window.Premium) window.Premium.render();
+  });
+
+  document.addEventListener("unmyeong:savecombo", function (e) {
+    var d = e.detail || {};
+    if (d.nums && d.nums.length === 6) saveCombo({ nums: d.nums.slice(), title: d.title || "VIP 10조합" });
+  });
+
+  /* 다른 스크립트(멤버십·프리미엄)가 사주 결과를 읽을 수 있게 노출 */
+  window.Unmyeong = {
+    analysis: function () { return state.analysis; },
+    draws: function () { return (state.data && state.data.draws) || []; },
+    birthKey: function () { return state.birth ? state.birth.key : ""; },
+    birth: function () { return state.birth; }
+  };
 
   document.addEventListener("DOMContentLoaded", function () {
     state.todayKey = todayKey();
@@ -567,10 +617,14 @@
       if (sessionStorage.getItem(LS.adbar) === "1") $("#adbar").style.display = "none";
     } catch (e) {}
 
+    renderTierUI();
+    if (window.Premium) window.Premium.render();
+
     loadData().then(function () {
       renderLatest();
       renderNumbers();
       renderSaved();
+      if (window.Premium) window.Premium.render();
     });
 
     if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

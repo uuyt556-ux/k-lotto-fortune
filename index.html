@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#1E1B18" />
-<meta name="description" content="생년월일과 오늘의 기운(사주·오행)으로 로또 6/45 번호를 고르는 K-사주 로또. 최신 동행복권 회차 조회와 내 번호 당첨 확인까지." />
+<meta name="description" content="생년월일과 오늘의 기운(사주·오행)으로 로또 6/45 번호를 고르는 K-사주 로또. 무료로 시작하고 월간·연간·VIP 멤버십으로 광고 없이 매일 황금 5조합과 심층 사주 리포트를 받아 보세요." />
 <meta name="robots" content="index,follow" />
 <meta property="og:title" content="운명 로또 — K-사주 로또" />
 <meta property="og:description" content="오늘의 기운과 내 사주로 고르는 6/45. 번호마다 이유가 있습니다." />
@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=2" />
+<link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
@@ -30,7 +30,10 @@
         <span>K-사주 로또 · 오늘의 기운으로 고르는 6/45</span>
       </div>
     </div>
-    <span class="stamp" aria-hidden="true">開運</span>
+    <button class="acct" id="acctBtn" type="button" aria-haspopup="dialog">
+      <span class="acct-dot" id="acctDot" aria-hidden="true"></span>
+      <span class="acct-label" id="acctLabel">로그인</span>
+    </button>
   </header>
 
   <main>
@@ -113,6 +116,9 @@
         <h2 id="numbers-title">오늘의 번호</h2>
         <span class="right" id="numbersFor">사주 미입력</span>
       </div>
+
+      <div id="memberBar" class="member-bar" hidden></div>
+
       <div id="comboFree"></div>
 
       <div id="comboLock" class="lock" style="margin-top:12px">
@@ -126,6 +132,46 @@
       <div id="comboPaid" hidden></div>
 
       <p class="hint" style="margin-top:12px">번호는 사주·오늘 일진·최근 회차 통계로 매일 새로 계산됩니다. 같은 날에는 같은 조합이 나옵니다.</p>
+    </section>
+
+    <!-- VIP 전용 10조합 -->
+    <section id="tencombos" class="card premium" aria-labelledby="ten-title">
+      <div class="card-head">
+        <span class="hanja">十</span>
+        <h2 id="ten-title">특별 10조합 생성</h2>
+        <span class="right gate-tag" id="tenTag">VIP</span>
+      </div>
+      <div class="gate" id="tenBody"></div>
+    </section>
+
+    <!-- VIP 심층 리포트 -->
+    <section id="deep" class="card premium" aria-labelledby="deep-title">
+      <div class="card-head">
+        <span class="hanja">命</span>
+        <h2 id="deep-title">1:1 사주 오행 심층 리포트</h2>
+        <span class="right gate-tag" id="deepTag">VIP</span>
+      </div>
+      <div class="gate" id="deepBody"></div>
+    </section>
+
+    <!-- 1년 재물운 캘린더 -->
+    <section id="calendar" class="card premium" aria-labelledby="cal-title">
+      <div class="card-head">
+        <span class="hanja">運</span>
+        <h2 id="cal-title">1년 대운 · 월별 재물운</h2>
+        <span class="right gate-tag" id="calTag">연간</span>
+      </div>
+      <div class="gate" id="calBody"></div>
+    </section>
+
+    <!-- VIP 명당 기운 길일 -->
+    <section id="lucky" class="card premium" aria-labelledby="lucky-title">
+      <div class="card-head">
+        <span class="hanja">吉</span>
+        <h2 id="lucky-title">명당 기운 길일</h2>
+        <span class="right gate-tag" id="luckyTag">VIP</span>
+      </div>
+      <div class="gate" id="luckyBody"></div>
     </section>
 
     <!-- 최신 회차 -->
@@ -157,6 +203,40 @@
         <button type="button" class="btn btn-ghost" id="checkBtn">당첨 확인</button>
         <button type="button" class="btn btn-ghost" id="clearBtn">전체 삭제</button>
       </div>
+      <p class="hint" id="savedLimitHint"></p>
+    </section>
+
+    <!-- 멤버십 · 요금제 -->
+    <section id="membership" class="card" aria-labelledby="membership-title">
+      <div class="card-head">
+        <span class="hanja">會</span>
+        <h2 id="membership-title">멤버십 · 요금제</h2>
+        <span class="right" id="tierNow">무료 회원</span>
+      </div>
+
+      <div class="beta-note">
+        <b>베타 · 테스트 결제 모드</b>
+        <p>지금은 실제로 청구되지 않는 체험 모드입니다. 버튼을 누르면 이 기기에서만 등급이 바뀌고, 모든 기능이 실제로 열립니다.
+          정식 출시 시 Google Play 인앱 결제(Google Play Billing)와 계정 서버로 교체됩니다.</p>
+      </div>
+
+      <div class="plans" id="planList"></div>
+
+      <details class="terms" id="termsBox">
+        <summary>결제 · 자동갱신 · 해지 · 환불 조건</summary>
+        <ul>
+          <li><b>요금</b> — 월간 2,900원(1개월 자동갱신) / 연간 24,900원(12개월, 월 2,075원꼴 · 약 28% 할인) / VIP 월 4,900원 또는 평생 49,000원(1회 결제). 부가세 포함 금액입니다.</li>
+          <li><b>자동갱신</b> — 다음 결제 예정일 <b>24시간 전까지</b> 해지하면 다음 회차 금액이 청구되지 않습니다. 해지 후에도 이미 결제한 기간의 만료일까지는 그대로 이용할 수 있습니다.</li>
+          <li><b>청약철회</b> — 결제 후 7일 이내에 콘텐츠를 이용하지 않았다면 청약철회(전액 환불)할 수 있습니다. 다만 황금 5조합·심층 리포트 등 <b>디지털 콘텐츠 열람을 시작한 뒤에는 청약철회가 제한</b>될 수 있습니다(전자상거래법 제17조 제2항).</li>
+          <li><b>환불</b> — 중도 해지 시 이용하지 않은 잔여 기간에 대해 관련 법령과 스토어 정책에 따라 환불을 검토합니다. 단순 변심에 의한 부분 환불은 제한될 수 있습니다.</li>
+          <li><b>스토어 결제</b> — Google Play에서 결제하는 경우 Google Play의 환불·해지 정책이 함께 적용되며, 해지는 Google Play 구독 메뉴에서도 가능합니다.</li>
+          <li><b>가격 변경</b> — 요금이 바뀌면 최소 30일 전에 앱과 이 화면에서 알립니다.</li>
+        </ul>
+      </details>
+
+      <div class="btn-row" style="margin-top:12px">
+        <button type="button" class="btn btn-ghost" id="myPageBtn">내 정보 · 구독 관리</button>
+      </div>
     </section>
 
     <div class="disclaimer">
@@ -165,7 +245,7 @@
     </div>
 
     <footer class="foot">
-      운명 로또 · K-사주 로또 v1.0<br />
+      운명 로또 · K-사주 로또 v1.1<br />
       <a href="./privacy.html">개인정보처리방침</a> · <a href="#today">맨 위로</a><br />
       © 2026 운명 로또
     </footer>
@@ -200,6 +280,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h9l5 5v11H5z"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h4.5"/></svg>
       기록
     </a>
+    <a href="#membership" data-target="membership">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l4 4-4 4-4-4z"/><path d="M4 11l3.5 3.5L12 10l4.5 4.5L20 11"/><path d="M8 20h8"/></svg>
+      멤버십
+    </a>
   </div>
 </nav>
 
@@ -223,10 +307,94 @@
   </div>
 </div>
 
+<!-- 회원가입 · 로그인 모달 -->
+<div class="modal-back" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="modal modal-tall">
+    <button type="button" class="modal-x" data-close="authModal" aria-label="닫기">×</button>
+    <div class="seal seal-mini" aria-hidden="true">會</div>
+    <h3 id="authTitle">회원가입 · 로그인</h3>
+    <p class="tiny beta-line">베타 테스트 계정입니다. 계정 정보는 이 기기(브라우저)에만 저장되고 실제 본인인증·서버 전송은 없습니다.</p>
+
+    <div class="tabs" id="authTabs" role="tablist">
+      <button type="button" data-auth-tab="login" class="on" role="tab">로그인</button>
+      <button type="button" data-auth-tab="signup" role="tab">회원가입</button>
+    </div>
+
+    <form id="loginForm" class="auth-form" autocomplete="on">
+      <div class="field">
+        <label for="loginEmail">이메일</label>
+        <input type="email" id="loginEmail" autocomplete="username" placeholder="you@example.com" required />
+      </div>
+      <div class="field">
+        <label for="loginPass">비밀번호</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="6자 이상" minlength="6" required />
+      </div>
+      <p class="form-err" id="loginErr" hidden></p>
+      <button class="btn btn-primary" type="submit">로그인</button>
+    </form>
+
+    <form id="signupForm" class="auth-form" autocomplete="on" hidden>
+      <div class="field">
+        <label for="suNick">닉네임</label>
+        <input type="text" id="suNick" maxlength="16" placeholder="예) 원철" required />
+      </div>
+      <div class="field">
+        <label for="suEmail">이메일</label>
+        <input type="email" id="suEmail" autocomplete="username" placeholder="you@example.com" required />
+      </div>
+      <div class="field">
+        <label for="suPass">비밀번호</label>
+        <input type="password" id="suPass" autocomplete="new-password" placeholder="6자 이상" minlength="6" required />
+      </div>
+      <div class="field">
+        <label for="suBirth">생년월일 <span class="opt">선택 · 사주 연동</span></label>
+        <input type="date" id="suBirth" min="1900-01-01" max="2050-12-31" />
+      </div>
+      <label class="chk"><input type="checkbox" id="suLink" checked /> 입력한 생년월일을 내 사주에 연결</label>
+      <label class="chk"><input type="checkbox" id="suAgree" required /> <span>[필수] 이용약관 및 개인정보 수집·이용에 동의합니다 (기기 내 저장)</span></label>
+      <p class="form-err" id="signupErr" hidden></p>
+      <button class="btn btn-primary" type="submit">회원가입</button>
+    </form>
+
+    <div class="or"><span>또는</span></div>
+    <div class="social">
+      <button type="button" class="sns google" data-social="google">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-3.8V7.6H3.1a10 10 0 0 0 0 9l3.3-2.6z"/><path fill="#EA4335" d="M12 6.1c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 0 0 3.1 7.6L6.4 10c.8-2.3 3-3.9 5.6-3.9z"/></svg>
+        Google로 계속
+      </button>
+      <button type="button" class="sns kakao" data-social="kakao">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#3A1D1D" d="M12 3.5c-4.7 0-8.5 3-8.5 6.7 0 2.4 1.6 4.5 4 5.7l-1 3.6c-.1.4.3.7.7.5l4.1-2.6c.2 0 .5.1.7.1 4.7 0 8.5-3 8.5-6.7S16.7 3.5 12 3.5z"/></svg>
+        카카오로 계속
+      </button>
+    </div>
+    <p class="tiny">소셜 로그인은 데모에서 <b>원클릭 테스트 계정</b>으로 동작합니다. 실제 연동 시 각 사업자 OAuth로 교체됩니다.</p>
+  </div>
+</div>
+
+<!-- 내 정보(마이페이지) 모달 -->
+<div class="modal-back" id="myModal" role="dialog" aria-modal="true" aria-labelledby="myTitle">
+  <div class="modal modal-tall">
+    <button type="button" class="modal-x" data-close="myModal" aria-label="닫기">×</button>
+    <h3 id="myTitle">내 정보</h3>
+    <div id="myBody"></div>
+  </div>
+</div>
+
+<!-- 체험 결제 확인 모달 -->
+<div class="modal-back" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+  <div class="modal">
+    <button type="button" class="modal-x" data-close="payModal" aria-label="닫기">×</button>
+    <h3 id="payTitle">체험 결제</h3>
+    <div id="payBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lunar.js?v=2"></script>
-<script src="saju.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="lunar.js?v=3"></script>
+<script src="saju.js?v=3"></script>
+<script src="account.js?v=3"></script>
+<script src="premium.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
