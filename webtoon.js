@@ -321,7 +321,7 @@
     clearTimeout(state.tickTimer);
     if (!state.auto) return;
     if (state.i >= state.lines.length - 1) return;
-    var wait = 1900 + Math.min(2400, (text || "").length * 18);
+    var wait = 2400 + Math.min(2600, (text || "").length * 20);
     state.tickTimer = setTimeout(function () { next(); }, wait);
   }
 
@@ -520,6 +520,7 @@
       box.addEventListener("change", function () {
         state.auto = box.checked;
         syncAuto();
+        clearTimeout(state.tickTimer);
         if (state.auto && !state.typing) afterTyped((state.lines[state.i] || {}).t || "");
       });
     });
