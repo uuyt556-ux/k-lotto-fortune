@@ -577,12 +577,73 @@
       '<div class="ny-grade"><b>' + A.grade.t + "</b> <small>" + A.grade.d + "</small></div>" +
       '<div class="ny-kw">' + A.keywords.map(function (k, i) {
         return '<span class="ny-kw-it' + (i === 0 ? " on" : "") + '">' + k + "</span>";
-      }).join("") + "</div>" +
-      '<div class="ny-sum">' +
-        "<p>" + A.summary.year + "</p>" +
-        "<p>" + A.summary.strength + "</p>" +
-        "<p>" + A.summary.yong + "</p>" +
-      "</div>";
+      }).join("") + "</div>";
+  }
+
+  /* ── 2027 심층 총운 5개 섹션 ── */
+  function deepHead(s, i) {
+    return '<div class="ny-deep-h"><span class="ny-deep-no">' + (i + 1) + "</span>" +
+      "<b>" + s.icon + " " + s.title + "</b><small>" + s.sub + "</small></div>";
+  }
+
+  function deepBody(s) {
+    if (s.key === "flow") {
+      return '<div class="ny-halves">' + s.halves.map(function (h) {
+          return '<div class="ny-half ' + h.tone + '">' +
+            '<div class="ny-half-top"><b>' + h.label + "</b><span>" + h.tag + "</span><i>" + h.avg + "</i></div>" +
+            "<p>" + h.text + "</p></div>";
+        }).join("") + "</div>" +
+        '<p class="ny-p ny-pivot"><b>변곡점</b> ' + s.pivot + "</p>";
+    }
+    var o = "";
+    if (s.paras) o += s.paras.map(function (t) { return '<p class="ny-p">' + t + "</p>"; }).join("");
+    if (s.facts) {
+      o += '<div class="ny-facts">' + s.facts.map(function (f) {
+        return '<span class="ny-fact">' + f + "</span>";
+      }).join("") + "</div>";
+    }
+    if (s.lead) o += '<p class="ny-p">' + s.lead + "</p>";
+    if (s.earn) {
+      o += '<div class="ny-mini-h earn">돈이 붙는 길</div><ul class="ny-list earn">' +
+        s.earn.map(function (t) { return "<li>" + t + "</li>"; }).join("") + "</ul>";
+    }
+    if (s.leak) {
+      o += '<div class="ny-mini-h leak">새는 구멍</div><ul class="ny-list leak">' +
+        s.leak.map(function (t) { return "<li>" + t + "</li>"; }).join("") + "</ul>";
+    }
+    if (s.windows) {
+      o += '<div class="ny-win"><span>계약·큰 결정 <b>' + s.windows.good + "</b></span>" +
+        '<span>피할 달 <b class="warn">' + s.windows.bad + "</b></span></div>";
+    }
+    if (s.rx) {
+      o += '<div class="ny-rx-row">' + s.rx.map(function (r) {
+        return '<span class="ny-rx-it">' + (r.color ? '<i style="background:' + r.color + '"></i>' : "") + r.label + "</span>";
+      }).join("") + "</div>";
+    }
+    if (s.actions) {
+      o += '<ol class="ny-acts">' + s.actions.map(function (t, i) {
+        return "<li><b>" + (i + 1) + "</b><span>" + t + "</span></li>";
+      }).join("") + "</ol>";
+    }
+    return o;
+  }
+
+  function annualDeep(A, full) {
+    var out = "";
+    (A.deep ? A.deep.sections : []).forEach(function (s, i) {
+      if (i === 0 || full) {
+        out += '<section class="ny-deep' + (i === 0 ? " hero" : "") + '">' + deepHead(s, i) +
+          '<div class="ny-deep-body">' + deepBody(s) + "</div></section>";
+        return;
+      }
+      out += '<section class="ny-deep lock">' + deepHead(s, i) +
+        '<p class="ny-lock-tease">' + s.teaser + "</p>" +
+        (i === 1
+          ? blurBlock('<div class="ny-deep-body">' + deepBody(s) + "</div>", "복채 패스에서 이어서")
+          : '<div class="ny-blur"><div class="ny-deep-body">' + deepBody(s) + "</div></div>") +
+        "</section>";
+    });
+    return out;
   }
 
   function annualGrid(A) {
@@ -643,8 +704,8 @@
         (full ? "" : annualHook(A)) +
         '<p class="tiny">월별 점수는 세운·월지·일지의 합충과 용신·기신 관계를 합산한 참고치입니다.</p>';
     } else {
-      box.innerHTML = annualHero(A) + annualGrid(A) +
-        (full ? "" : miniCta("4대 운세·주의할 달·길한 달 전체 풀이는 복채 패스에서 열립니다."));
+      box.innerHTML = annualHero(A) + annualDeep(A, full) + annualGrid(A) +
+        (full ? "" : miniCta("2~5번(상하반기 흐름·돈 새는 구멍·귀인·개운 처방)은 복채 패스에서 한 번에 열립니다."));
     }
 
     bindCommon(box);

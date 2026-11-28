@@ -583,6 +583,232 @@
     return "금(金)이 약해지는 달이라 환기와 목 관리에 신경 쓰세요.";
   }
 
+  /* ═════════ 2027 심층 총운 — 5개 섹션 ═════════
+     일간·신강약·오행 과부족·용신/희신/기신·일지 충합·12개월 점수를 모두 문장에 반영합니다. */
+  var ROLE_HEAD = {
+    비겁: "동료·경쟁의 자리", 식상: "표현·생산의 자리", 재성: "재물·거래의 자리",
+    관성: "책임·계약의 자리", 인성: "문서·후원의 자리"
+  };
+  var ROLE_MEAN = {
+    비겁: "내 힘이 겹치는 자리라 사람과 돈이 함께 움직이고, 나눠야 커집니다",
+    식상: "내가 만들어 밖으로 내보내는 자리라 말·상품·콘텐츠가 그대로 값이 됩니다",
+    재성: "내가 직접 쥐는 돈의 자리라 거래·정산·가격이 결과를 가릅니다",
+    관성: "나를 누르는 책임의 자리라 계약·직책·심사에서 실력이 값이 됩니다",
+    인성: "나를 채워 주는 후원의 자리라 배움·서류·보증이 힘이 됩니다"
+  };
+  var EL_PERSON = {
+    목: "기획·교육·콘텐츠로 사람을 키우는 사람",
+    화: "홍보·영업·말로 사람을 모으는 사람",
+    토: "계약·회계·유통·부동산을 다루는 사람",
+    금: "품질·심사·결제·법무를 쥔 사람",
+    수: "정보·물류·플랫폼을 다루는 사람"
+  };
+  var MONEY_PATH = {
+    목: "새 제안과 기획을 문서로 만들어 파는 일",
+    화: "알리고 설명해 사람을 모으는 일",
+    토: "축적·계약·재고를 다루는 일",
+    금: "결제·품질·마무리를 확실히 하는 일",
+    수: "정보·거래·이동에서 기회를 잡는 일"
+  };
+  var EL_FRICTION = {
+    목: "말이 앞서고 결정을 재촉하는 순간",
+    화: "감정이 먼저 올라와 말이 세지는 순간",
+    토: "고집이 올라와 남의 말을 끊는 순간",
+    금: "기준을 따지다 관계를 서먹하게 만드는 말투",
+    수: "생각이 많아 답이 늦어 오해를 사는 순간"
+  };
+
+  function elP(el, a, b) { return el + ((el === "목" || el === "금") ? a : b); }
+  /* 한자(한글) 뒤에 알맞은 조사를 붙입니다. */
+  function hj(el) { return ELEM_H[el] + "(" + el + ")" + ((el === "목" || el === "금") ? "이" : "가"); }
+  function hjObj(el) { return ELEM_H[el] + "(" + el + ")" + ((el === "목" || el === "금") ? "을" : "를"); }
+  var BR_BAT = { 축: 1, 인: 1, 진: 1, 신: 1, 술: 1 };   /* 받침이 있는 지지 */
+  function bJ(name, a, b) { return name + (BR_BAT[name.charAt(0)] ? a : b); }
+  function avgScore(arr) {
+    var t = 0;
+    arr.forEach(function (x) { t += x.score; });
+    return Math.round(t / arr.length);
+  }
+  function bestOf(arr) { var b = arr[0]; arr.forEach(function (x) { if (x.score > b.score) b = x; }); return b; }
+  function worstOf(arr) { var b = arr[0]; arr.forEach(function (x) { if (x.score < b.score) b = x; }); return b; }
+  function mList(arr) {
+    return arr.slice().sort(function (x, y) { return x.m - y.m; })
+      .map(function (m) { return m.m + "월"; }).join("·");
+  }
+
+  function deepAnnual(c, base) {
+    var a = c.a, o = c.o, me = c.me, H = ELEM_H, yg = c.yg;
+    var months = base.months, good = base.good, caution = base.caution;
+    var stemR = c.roles.stem, brR = c.roles.branch;
+    var cnt = a.counts;
+    var jaeEl = CON[me], gwanEl = CON_BY[me], inEl = GEN_BY[me], sikEl = GEN[me];
+    var rc = { 비겁: cnt[me], 식상: cnt[sikEl], 재성: cnt[jaeEl], 관성: cnt[gwanEl], 인성: cnt[inEl] };
+    var jaeIn = stemR === "재성" || brR === "재성";
+    var sikIn = stemR === "식상" || brR === "식상";
+    var biIn = stemR === "비겁" || brR === "비겁";
+    var yearYong = yg.stemEl === o.yong || yg.branchEl === o.yong;
+    var yearHee = yg.stemEl === o.hee || yg.branchEl === o.hee;
+    var yearGi = yg.stemEl === o.gi || yg.branchEl === o.gi;
+    var jaeGi = jaeEl === o.gi;
+    var strong = o.strong;
+
+    /* ─ 1) 총평 ─ */
+    var p1 = "2027년은 정미(丁未)년, 하늘의 정(丁)은 촛불의 화(火), 땅의 미(未)는 여름 끝 마른 흙(土)입니다. "
+      + "일간 " + a.dayStemName + " " + H[me] + "인 내 사주에는 정(丁)이 " + stemR + "(" + ROLE_HEAD[stemR] + ")으로, "
+      + "미(未)가 " + brR + "(" + ROLE_HEAD[brR] + ")으로 들어옵니다. "
+      + ROLE_MEAN[stemR] + ". " + (brR === stemR ? "" : ROLE_MEAN[brR] + ". ");
+    var p1b = yearGi
+      ? "다만 " + hj(yg.stemEl === o.gi ? yg.stemEl : yg.branchEl) + " 내 기신(忌神)이라, 벌인 만큼 거두는 절차를 따로 두어야 합니다."
+      : yearYong
+        ? "그 기운이 내 용신과 맞물려, 올해 벌인 일이 2028년까지 남습니다."
+        : yearHee
+          ? "희신이 받쳐 주어, 벌인 일이 남의 입을 통해 알려지며 커집니다."
+          : "용신·희신과 정면으로 부딪히지는 않아, 크게 트이기보다 내가 만든 만큼 쌓이는 해입니다.";
+    var p2 = (strong
+      ? "받쳐 주는 힘이 " + o.support + "/" + o.total + "자로 두터운 신강(身强)입니다. 힘이 남는 해에는 버는 만큼 새는 곳도 커지니, 늘리기보다 하나를 깊게 파세요. "
+      : "받쳐 주는 힘이 " + o.support + "/" + o.total + "자로 얇은 신약(身弱)입니다. 정미년의 화·토는 나를 쓰게 만드는 기운이라, 벌이기 전에 회복의 리듬부터 세워야 합니다. ")
+      + (cnt[a.strongest[0]] >= 3
+        ? hj(a.strongest[0]) + " " + cnt[a.strongest[0]] + "자로 넘쳐, 같은 기운이 겹치는 달엔 고집과 과속으로 드러납니다. "
+        : "사주에서 가장 얇은 " + hjObj(a.lacking[0]) + " 채우는 선택이 곧 개운입니다. ");
+    var p3 = c.dayClash
+      ? "일지 " + bJ(c.dayBrName, "이", "가") + " 세운 미(未)와 정면으로 부딪치는 충(沖)입니다. 사는 곳·다니는 곳·가까운 사람 중 하나가 바뀌는 해라, 바뀌는 것보다 바뀌는 시기를 내가 고르는 게 중요합니다."
+      : c.harmony
+        ? "일지 " + bJ(c.dayBrName, "이", "가") + " 세운 미(未)와 육합(六合)을 이룹니다. 막혀 있던 것이 풀리는 해라, 미뤄 둔 인연·거래·연락을 먼저 꺼내면 그대로 이어집니다."
+        : "일지 " + bJ(c.dayBrName, "은", "는") + " 세운 미(未)와 충도 합도 되지 않아, 판이 크게 뒤집히기보다 내가 만든 만큼 쌓이는 해입니다.";
+
+    var facts = [
+      "일간 " + a.dayStemName + " " + H[me] + " · " + (strong ? "신강" : "신약") + " " + o.support + "/" + o.total,
+      "용신 " + H[o.yong] + " · 희신 " + H[o.hee] + " · 기신 " + H[o.gi],
+      c.dayClash ? "일지 " + c.dayBrName + " ↔ 세운 未 충" : (c.harmony ? "일지 " + c.dayBrName + " ↔ 세운 未 합" : "일지 무충무합"),
+      "정미년 " + stemR + "·" + brR
+    ];
+
+    /* ─ 2) 상반기 vs 하반기 ─ */
+    var h1 = months.slice(0, 6), h2 = months.slice(6);
+    var a1 = avgScore(h1), a2 = avgScore(h2);
+    var upFirst = a1 >= a2;
+    var better = upFirst ? h1 : h2, weaker = upFirst ? h2 : h1;
+    var bm = bestOf(better), wm = worstOf(weaker);
+    var sameYearMo = null;
+    months.forEach(function (m) { if (m.factors.indexOf("sameYear") >= 0) sameYearMo = m; });
+    var piv = [];
+    for (var pi = 1; pi < months.length; pi++) {
+      piv.push({ m: months[pi].m, d: months[pi].score - months[pi - 1].score, from: months[pi - 1].score, to: months[pi].score, gz: months[pi].ganzi });
+    }
+    piv.sort(function (x, y) { return Math.abs(y.d) - Math.abs(x.d); });
+    var pv = piv[0];
+
+    var upText = "가장 힘이 붙는 " + bm.m + "월(" + bm.ganzi + "월 · " + bm.score + "점)에 " + ROLE_USE[bm.role] + " 몰아 두세요. "
+      + (strong ? "힘이 남는 구간이라 벌인 만큼 굴러갑니다." : "체력이 남는 구간이라 회복과 실행을 같이 가져가야 합니다.");
+    var downText = "가장 눌리는 " + wm.m + "월(" + wm.ganzi + "월 · " + wm.score + "점)에는 새 일을 벌이지 말고 정산·서류·휴식으로 쓰세요. 이 구간의 큰 결정은 앞뒤 달로 피해 잡으세요.";
+    var halves = upFirst
+      ? [{ label: "1~6월", tone: "up", avg: a1, tag: "먼저 치는 구간", text: upText },
+         { label: "7~12월", tone: "low", avg: a2, tag: "숨 고르는 구간", text: downText }]
+      : [{ label: "1~6월", tone: "low", avg: a1, tag: "준비하는 구간", text: downText },
+         { label: "7~12월", tone: "up", avg: a2, tag: "밀어붙이는 구간", text: upText }];
+    var pivotLine = "가장 크게 꺾이는 달은 " + pv.m + "월(" + pv.gz + "월), " + pv.from + "점에서 " + pv.to + "점으로 " + (pv.d > 0 ? "올라" : "내려") + "갑니다. "
+      + (pv.d > 0
+        ? "이 달 전에 자금과 서류를 미리 준비해 두면 흐름을 그대로 탑니다. "
+        : "이 달에 걸린 큰일(계약·이사·큰 지출)은 앞이나 뒤 달로 옮기세요. ")
+      + "상반기 평균 " + a1 + "점, 하반기 평균 " + a2 + "점으로 " + (upFirst ? "상반기에 밀고 하반기에 거두는" : "상반기에 준비하고 하반기에 밀어붙이는") + " 해입니다. "
+      + (sameYearMo ? sameYearMo.m + "월(" + sameYearMo.ganzi + "월)은 세운 未가 그대로 겹치는 달이라 한 해 기운이 가장 진하게 드러나니, 큰 결정은 그 전 달에 끝내 두세요." : "");
+
+    /* ─ 3) 돈이 붙는 길 vs 새는 구멍 ─ */
+    var mLead = "내 사주에서 돈은 내가 누르는 " + H[jaeEl] + "(" + jaeEl + ") 기운이라, " + MONEY_PATH[jaeEl] + "에서 붙습니다. "
+      + (jaeIn
+        ? "정미년에 그 기운이 " + (stemR === "재성" && brR === "재성" ? "천간·지지 양쪽" : "세운 한쪽") + "으로 들어와, 벌이는 일이 바로 돈으로 이어집니다."
+        : "올해는 그 기운이 세운에 직접 오지 않아, 기다리기보다 만들어 내보내야 돈이 됩니다.");
+    var earn = [];
+    earn.push(jaeIn
+      ? "재성이 세운에 들어온 해라, 값이 붙은 일을 그대로 챙기면 통장이 두꺼워집니다. 쥔 손을 벌리면 같이 나갑니다."
+      : "세운에 재성이 없으니 큰돈이 굴러들어 오는 해는 아닙니다. 새는 구멍을 막는 것만으로 1년 성과가 달라집니다.");
+    earn.push(sikIn || rc["식상"] >= 2
+      ? "내가 낳는 " + H[sikEl] + "(" + sikEl + ") 기운이 " + rc["식상"] + "자" + (sikIn ? "에 세운까지 더해져" : "로") + ", 만들어 알리는 만큼 값이 붙습니다. 상품·콘텐츠·설명을 늘리는 쪽이 남는 장사입니다."
+      : "표현(식상)이 얇아 새로 알리기보다, 이미 있는 상품의 가격·재고·상세를 다듬는 쪽이 돈이 됩니다.");
+    earn.push(strong
+      ? "신강한 힘을 밖으로 쓰는 구조라, 결정을 붙들고 있으면 재물이 아니라 피로가 쌓입니다. 정한 일은 그 주에 결제와 정산까지 끝내세요."
+      : "혼자 다 벌려 들면 체력에서 끊깁니다. 반복 업무는 넘기고 결정에만 힘을 쓰세요.");
+    var leak = [];
+    if (c.dayClash) leak.push("일지 " + bJ(c.dayBrName, "과", "와") + " 세운의 충 — 보증, 공동명의, 구두 약속. 종이에 남기지 않은 돈은 올해 돌아오지 않습니다.");
+    if (rc["비겁"] >= 2) leak.push("비겁 " + rc["비겁"] + "자 — 지인 거래·동업 분배. 시작할 때 지분과 정산일을 정하지 않으면 끝에서 갈라집니다.");
+    if (jaeGi) leak.push("재성 " + H[jaeEl] + "이 기신 — 들어온 돈이 그대로 나가기 쉬워, 수익금 30%는 손대지 않는 계좌로 먼저 옮기세요.");
+    if (rc["인성"] >= 2 && leak.length < 3) leak.push("인성 " + rc["인성"] + "자 — 구독·교육·자격에 새는 고정비. 끝내지 않은 강의와 안 쓰는 구독이 그대로 지출입니다.");
+    if (rc["식상"] >= 3 && leak.length < 3) leak.push("식상 " + rc["식상"] + "자 — 벌이려는 마음이 앞서 새 채널·새 기기에 먼저 돈이 나갑니다. 결제 전 하루만 두세요.");
+    if (leak.length < 3) leak.push("무리한 확장 — 매출이 오른 달에 지출을 먼저 늘리는 패턴. 늘릴 것은 사람이 아니라 재고 회전입니다.");
+    if (leak.length < 3) leak.push("충동 지출 — 새 기기·새 강의·새 채널. 하루만 미루면 절반은 사라집니다.");
+    leak = leak.slice(0, 3);
+
+    /* ─ 4) 귀인과 대인·문서 ─ */
+    var gM = months.filter(function (m) { return m.role === "관성" && m.score >= 66; });
+    var goodM = gM.length ? mList(gM) : mList(good.slice(0, 2));
+    var badM = mList(caution.slice(0, 2));
+    var q1 = "올해 나를 살리는 기운은 나를 생하는 " + H[inEl] + "(" + inEl + ")입니다. 귀인은 " + EL_PERSON[inEl] + " — 이런 사람의 말을 한 번 더 듣고, 소개는 받아 두세요. "
+      + (inEl === o.yong || inEl === o.hee ? "그 기운이 용신·희신과 맞아 실제 도움이 됩니다." : inEl === o.gi ? "다만 그 기운이 기신 쪽이라 조언은 한 번 걸러 쓰세요." : "결정적인 순간에 이 사람이 다리를 놓아 줍니다.");
+    var q2 = (biIn || rc["비겁"] >= 2)
+      ? "마찰은 가까운 사람에게서 옵니다. 비겁이 겹치는 해라 친구·형제·동업자와 돈 이야기에서 틀어지기 쉽고, " + EL_FRICTION[o.gi] + "에 말이 날카로워집니다."
+      : "마찰은 윗사람·거래처에서 옵니다. " + EL_FRICTION[o.gi] + "이 문제라, 같은 말도 근거를 붙여 하면 통하고 감정으로 하면 남습니다.";
+    var q3 = "큰 계약·이직·서명은 기운이 받쳐 주는 " + goodM + "에 잡고, " + badM + "에는 서명을 다음 달로 미루세요. "
+      + (c.dayClash ? "일지가 흔들리는 해라 배우자·가족과의 약속은 날짜를 미리 확정해 두면 싸움이 줄어듭니다." : "가족과의 약속을 지키는 것만으로 신뢰가 쌓이는 해입니다.");
+    if (c.monthClash) q3 += " 월지 " + bJ(c.monBrName, "이", "가") + " 흔들려 가족 쪽 일정이 겹치니, 돈과 시간을 미리 말해 두세요.";
+
+    /* ─ 5) 개운 처방 ─ */
+    var r1 = "용신 " + H[o.yong] + "(" + o.yong + ")의 색은 " + ELEM_COLORNAME[o.yong] + ", 방위는 " + ELEM_DIR[o.yong] + ", 시간은 " + ELEM_TIME[o.yong] + "입니다. 희신 " + H[o.hee] + "(" + o.hee + ")까지 겹치면 " + ELEM_COLORNAME[o.hee] + " 소품 하나를 더하세요.";
+    var acts = [];
+    acts.push(c.dayClash
+      ? "돈이 오가는 일은 문자·계약서로 남기고, 보증과 공동명의는 이 해에 서지 마세요."
+      : jaeGi
+        ? "수익금 30%는 손대지 않는 계좌로 먼저 옮기고, 남은 돈으로만 판단하세요."
+        : "큰 지출은 용신 " + H[o.yong] + "의 수리(" + ELEM_NUMS[o.yong].slice(0, 3).join("·") + ")가 붙는 날로 미루고, 결제 전 하루를 두세요.");
+    acts.push("결제·서명·정산 같은 결정은 용신 " + H[o.yong] + "의 시간(" + ELEM_TIME[o.yong] + ")에 몰아넣고, 통화는 " + ELEM_DIR[o.yong] + " 자리에서 하세요.");
+    acts.push(caution[0].m + "월(가장 흔들리는 달)에는 새 계약·큰 지출을 잡지 말고, 그 전 달에 미리 끝내 두세요.");
+
+    var secs = [
+      {
+        key: "overview", icon: "🧭", title: "2027년 정미년 한 해 판세", sub: "총평",
+        paras: [p1 + p1b, p2 + p3], facts: facts
+      },
+      {
+        key: "flow", icon: "📈", title: "상반기 vs 하반기 흐름", sub: "1~6월 · 7~12월",
+        halves: halves, pivot: pivotLine,
+        teaser: "1~6월 " + a1 + "점 vs 7~12월 " + a2 + "점 — 변곡점은 " + pv.m + "월."
+      },
+      {
+        key: "money", icon: "💰", title: "돈이 붙는 길 vs 새는 구멍", sub: "재물 팩트",
+        lead: mLead, earn: earn, leak: leak,
+        teaser: "돈은 " + H[jaeEl] + "(" + jaeEl + ")에서 붙고, 새는 곳은 " + (c.dayClash ? "보증·구두 약속" : (rc["비겁"] >= 2 ? "지인 거래·동업 분배" : "고정비·무리한 확장")) + "입니다."
+      },
+      {
+        key: "people", icon: "🤝", title: "귀인과 대인·문서 주의", sub: "사람·계약",
+        paras: [q1, q2, q3], windows: { good: goodM, bad: badM },
+        teaser: "귀인은 " + H[inEl] + " 기운의 사람, 서명은 " + badM + "을 피하세요."
+      },
+      {
+        key: "remedy", icon: "🔑", title: "2027년 내 사주 맞춤 개운 처방", sub: "색·방위·시간",
+        paras: [r1], actions: acts,
+        rx: [
+          { label: ELEM_COLORNAME[o.yong], color: ELEM_COLOR[o.yong] },
+          { label: ELEM_DIR[o.yong], color: "" },
+          { label: ELEM_TIME[o.yong], color: "" }
+        ],
+        teaser: ELEM_COLORNAME[o.yong] + " · " + ELEM_DIR[o.yong] + " · 매일 지킬 행동 3가지."
+      }
+    ];
+
+    var plain = [];
+    secs.forEach(function (s) {
+      if (s.paras) plain = plain.concat(s.paras);
+      if (s.halves) s.halves.forEach(function (h) { plain.push(h.text); });
+      if (s.pivot) plain.push(s.pivot);
+      if (s.lead) plain.push(s.lead);
+      if (s.earn) plain = plain.concat(s.earn);
+      if (s.leak) plain = plain.concat(s.leak);
+      if (s.actions) plain = plain.concat(s.actions);
+    });
+    var chars = plain.join(" ").replace(/\s+/g, "").length;
+
+    return { sections: secs, chars: chars };
+  }
+
   /* ── 한 해 총운세 ── */
   function annual(s, gender, year) {
     year = year || 2027;
@@ -665,12 +891,14 @@
       }
     }
 
+    var deep = deepAnnual(ctx, { months: months, good: good, caution: caution });
+
     return {
       year: year, yg: yg, me: me, meName: a.dayStemName, meH: H[me],
       strong: o.strong, support: o.support, total: o.total,
       yong: o.yong, hee: o.hee, gi: o.gi,
       score: score, grade: gradeOf(score), keywords: kw,
-      summary: summary, domains: domains, months: months,
+      summary: summary, deep: deep, domains: domains, months: months,
       caution: caution, good: good,
       dayClash: dayClash, harmony: harmony, monthClash: monthClash,
       dayBrName: dayBrName, monBrName: monBrName, roles: roles
@@ -717,7 +945,7 @@
     tip = jaeGi
       ? "수익금의 30%는 손대지 않는 계좌로 먼저 옮기세요. 남은 돈으로만 판단하면 됩니다."
       : (o.strong
-        ? "큰 지출은 용신 " + H[o.yong] + "의 날(끝수 " + ELEM_NUMS[o.yong].slice(0, 3).join("·") + ")로 미루고, 결제 전 하루를 두세요."
+        ? "큰 지출은 용신 " + H[o.yong] + "의 수리(" + ELEM_NUMS[o.yong].slice(0, 3).join("·") + ")가 붙는 날로 미루고, 결제 전 하루를 두세요."
         : "자동결제·구독을 이번 주에 전부 목록으로 만들고, 쓰지 않는 것은 오늘 해지하세요.");
 
     return { key: "money", icon: "💰", title: "금전운", score: s, tone: toneOf(s), lead: lead, lines: lines, tip: tip };
