@@ -102,6 +102,26 @@ python3 scripts/fetch_lotto.py --rounds 100
 - GitHub Actions(`.github/workflows/update-lotto.yml`)가 매주 토요일 21:20(KST)에 자동 실행하고, 변경이 있으면 커밋합니다. 저장소 **Actions** 탭에서 수동 실행도 가능합니다.
 - ⚠️ 동행복권은 해외·데이터센터 IP를 막는 경우가 있습니다. GitHub Actions 러너에서 접속이 막히면 스크립트는 **기존 데이터를 유지하고 실패(exit 1)** 로 끝나며, 앱은 정상 동작합니다. 이때는 국내 네트워크에서 `python3 scripts/fetch_lotto.py --rounds 100` 을 실행해 갱신하면 됩니다. (2026-11-27 저장된 100회는 국내 네트워크에서 수집)
 
+## 채널 모드 — 웹(계좌이체) / 플레이스토어(무료·광고형)
+
+플레이스토어 앱은 **무료·광고형**으로만 출시합니다(Google Play 결제 정책: 앱 안에서 소비되는 디지털 콘텐츠는 Play 결제만 허용). 웹 사이트의 계좌이체·이용권 코드 판매는 그대로 두고, **앱으로 접속할 때만 다른 모드**로 동작하도록 분리했습니다.
+
+- **채널 판별** — `index.html`·`privacy.html`의 `<head>` 인라인 스크립트가 CSS·본 스크립트보다 먼저 돕니다.
+  - `?channel=play` → `window.BOKCHAE_PLAY = true`, `sessionStorage.bokchae_play_channel = '1'` 저장, `<html data-channel="play">`
+  - `?channel=web` → 저장값 삭제(웹 판매 화면)
+  - 파라미터 없음 → 저장된 값 사용(기본 web)
+- **플레이스토어 모드에서 바뀌는 것**
+  - 계좌이체 안내(`.pay-intro`·`.bank-mini`)·이용권 코드 입력창(`#voucherTop`)·요금표(`#planList`)·결제 조건(`#termsBox`)·결제 모달(`#payModal`)·요금제 탭 → **CSS로 처음부터 숨김**(`account.js`에서도 렌더하지 않음)
+  - `Membership.has()` → 콘텐츠 기능(`weekly5`·`newYear`·`annualReport`·`deepReport`·`tenCombos`·`luckyDay` 등)은 **전부 true**, 광고 관련(`noAds`·`goldInstant`)만 false → 하단 배너·3초 대기는 유지
+  - `saveLimit()` → 0(무제한), `openPay()` → 결제창 대신 안내 토스트, `renderMy()` → 계정·알림만 표시(결제 문구 없음)
+  - 하단 내비 `멤버십` → **`심층`** 으로 바꾸고, 멤버십 화면은 `정밀 10조합 / 심층 리포트 / 1년 캘린더 / 길일`만 남김(태그는 `무료 개방`)
+  - 5조합 잠금 문구·광고 대기 모달 카피 → "잠시 후 열립니다" / "무료로 이용 중이에요" 톤(`app.js`의 `applyPlayUi`, `AD_TXT`)
+  - 웹툰 점사는 무료·광고형 전용 대사(`HOOK.*.playOpen`)와 CTA(`ctaHtml` play 분기)를 사용해 요금제 멘트를 쓰지 않음
+  - 3일 소원 부적 카드 → 만들기·원본 저장·공유 모두 무료(`wish.js`의 `PLAY` 분기, `#wishBuy`는 숨김)
+  - 개인정보처리방침 → `?channel=play`에서 "스토어 앱은 모든 기능 무료, 결제 없음" 안내로 바꾸고 계좌이체·요금 문단은 웹 전용(`.web-only`)으로 분리
+- **TWA** — `work/bokchae-twa`의 `twa-manifest.json`·`app/build.gradle` `launchUrl`이 `/k-lotto-fortune/?channel=play`입니다.
+- 정적 자원 캐시 버전: `?v=22` / 서비스워커 `bokchae-lotto-v22`.
+
 ## 멤버십 · 요금제 (계좌이체 + 이용권 코드)
 
 회원가입·로그인과 구독 등급을 넣었습니다. 유료 이용은 **계좌이체 결제**입니다 — 결제창에 입금 계좌(카카오뱅크 3333-06-3329778 · 예금주 이원철)와 금액이 나오고, 원클릭 **계좌 복사** 버튼을 제공합니다. 입금 확인 후 운영자가 **이용권 코드**를 보내면, 고객이 멤버십·결제창의 코드 칸에 입력하는 즉시 등급이 열립니다. 계정·구독 상태는 기기(localStorage)에만 남습니다.

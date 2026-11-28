@@ -4,6 +4,44 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#1E1B18" />
+<script>
+/* ───────── 채널 판별: 플레이스토어 앱(무료·광고형) / 웹(계좌이체) ─────────
+   · ?channel=play  → 플레이스토어 무료·광고형 모드 (sessionStorage에 기억)
+   · ?channel=web   → 무료 모드 해제(웹 판매 화면)
+   · 그 외          → 저장된 채널을 따름 (기본값 web)
+   이 스크립트는 CSS·다른 스크립트보다 먼저 돌아, 결제 UI가 잠깐이라도 그려지지 않게 합니다. */
+(function () {
+  var play = false;
+  try {
+    var q = new URLSearchParams(location.search);
+    var ch = q.get('channel');
+    if (ch === 'web') {
+      try { sessionStorage.removeItem('bokchae_play_channel'); } catch (e) {}
+    } else if (ch === 'play') {
+      try { sessionStorage.setItem('bokchae_play_channel', '1'); } catch (e) {}
+      play = true;
+    } else {
+      try { play = sessionStorage.getItem('bokchae_play_channel') === '1'; } catch (e) {}
+    }
+  } catch (e) {}
+  window.BOKCHAE_PLAY = play;
+  window.BOKCHAE_CHANNEL = play ? 'play' : 'web';
+  if (play) document.documentElement.setAttribute('data-channel', 'play');
+})();
+</script>
+<style>
+/* 플레이스토어 모드: 계좌이체·이용권 코드·요금표·결제 모달은 화면에 존재하지 않습니다 */
+html[data-channel="play"] .pay-intro,
+html[data-channel="play"] .bank-mini,
+html[data-channel="play"] #voucherTop,
+html[data-channel="play"] #planList,
+html[data-channel="play"] #termsBox,
+html[data-channel="play"] #myPageBtn,
+html[data-channel="play"] #payModal,
+html[data-channel="play"] [data-tabgroup="membership"] [data-tab="plans"],
+html[data-channel="play"] [data-tabpane="membership:plans"] { display: none !important; }
+html[data-channel="play"] #wishBuy { display: none !important; }
+</style>
 <meta name="description" content="복채로또 - 사주와 2027 신년 재물운으로 로또 6/45 번호를 고르는 앱. 생년월일만 넣으면 웹툰 점술사가 오늘의 기운과 2027 정미년 재물운을 내 사주에 맞춰 풀어 주고, 무료로 시작해 월간·연간·VIP 멤버십으로 광고 없이 매일 황금 5조합과 심층 사주 리포트를 받아 볼 수 있습니다." />
 <meta name="robots" content="index,follow" />
 <meta property="og:title" content="복채로또 - 사주·2027 재물운 번호" />
@@ -17,8 +55,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=21" />
-<link rel="stylesheet" href="webtoon.css?v=21" />
+<link rel="stylesheet" href="style.css?v=22" />
+<link rel="stylesheet" href="webtoon.css?v=22" />
 <style>
 /* 인트로 스플래시 — 외부 CSS를 기다리지 않고 첫 페인트부터 화면을 덮도록 하는 최소 스타일 */
 html.splashing { background-color: #100E0C; }
@@ -481,8 +519,8 @@ html.splashing, html.splashing body { overflow: hidden; }
     </div>
 
     <footer class="foot">
-      복채로또 · 사주·2027 재물운 번호 v1.6<br />
-      <a href="./privacy.html">개인정보처리방침</a> · <a href="#today">맨 위로</a><br />
+      복채로또 · 사주·2027 재물운 번호 v1.7<br />
+      <a href="./privacy.html" id="privacyLink">개인정보처리방침</a> · <a href="#today">맨 위로</a><br />
       © 2026 복채로또
     </footer>
   </main>
@@ -516,7 +554,7 @@ html.splashing, html.splashing body { overflow: hidden; }
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h9l5 5v11H5z"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h4.5"/></svg>
       기록
     </a>
-    <a href="#membership" data-target="membership">
+    <a href="#membership" data-target="membership" id="navMembership">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l4 4-4 4-4-4z"/><path d="M4 11l3.5 3.5L12 10l4.5 4.5L20 11"/><path d="M8 20h8"/></svg>
       멤버십
     </a>
@@ -648,12 +686,12 @@ html.splashing, html.splashing body { overflow: hidden; }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lunar.js?v=21"></script>
-<script src="saju.js?v=21"></script>
-<script src="account.js?v=21"></script>
-<script src="premium.js?v=21"></script>
-<script src="webtoon.js?v=21"></script>
-<script src="wish.js?v=21"></script>
-<script src="app.js?v=21"></script>
+<script src="lunar.js?v=22"></script>
+<script src="saju.js?v=22"></script>
+<script src="account.js?v=22"></script>
+<script src="premium.js?v=22"></script>
+<script src="webtoon.js?v=22"></script>
+<script src="wish.js?v=22"></script>
+<script src="app.js?v=22"></script>
 </body>
 </html>

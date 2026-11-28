@@ -67,6 +67,8 @@
   function cast() { return CAST[state.viewer] || CAST.male; }
   function voice() { return state.viewer === "female" ? "female" : "male"; }
   function M() { return global.Membership; }
+  /* 플레이스토어 무료·광고형 모드 */
+  var PLAY = !!global.BOKCHAE_PLAY;
 
   /* 같은 씨앗이면 같은 대사, 씨앗이 바뀌면 다른 대사 — 새로고침·다른 점사마다 변주가 돌아가게 합니다 */
   function pick(arr, n) {
@@ -671,6 +673,11 @@
   /* ───────── 안내(후킹) 멘트 — 등급별 여러 버전 ───────── */
   var HOOK = {
     male: {
+      playOpen: [
+        function () { return "오늘의 5조합도, 2027 네 갈래 총운세도 다 열려 있어요. 무료로 이용 중이시니까요."; },
+        function () { return "손님은 오늘 필요한 게 다 열려 있어요. 5조합도 총운세도, 광고만 잠깐 보면 바로 나옵니다."; },
+        function () { return "복채는 따로 안 받아요. 제가 손님 몫으로 다 열어 뒀습니다 — 광고 하나만 봐 주세요."; }
+      ],
       vip: [
         function () { return "손님은 이미 제 단골 중의 단골이시네요. 10조합도, 심층 리포트도 다 열려 있어요. 제가 보여 드릴 게 없다는 게 아쉬울 정도로요."; },
         function () { return "손님, 오늘 제 장부엔 손님 이름 옆에 금테가 그어져 있어요. 황금 사주 패스 손님이니까요. 10조합, 심층 리포트 — 다 열려 있죠."; },
@@ -742,6 +749,11 @@
       ]
     },
     female: {
+      playOpen: [
+        function () { return "오늘 보실 건 다 열려 있어요. 5조합도 2027 총운세 네 갈래도 무료로 보실 수 있어요."; },
+        function () { return "손님, 오늘은 제가 다 열어 뒀어요. 5조합도 총운세도, 짧은 광고 하나만 보고 가세요."; },
+        function () { return "복채 안 받아요. 무료로 이용 중이시니까, 오늘 기운만 제대로 가져가세요."; }
+      ],
       vip: [
         function () { return "손님은 다 열려 있어요. 10조합도, 심층 리포트도… 제가 더 보여 드릴 게 없을 정도예요."; },
         function () { return "손님, 오늘은 제가 아쉬운 게 없어요. 10조합도 심층 리포트도 다 열려 있으니까요. …그게 조금 아쉽지만요."; },
@@ -810,6 +822,13 @@
   function hookLines(c, r) {
     var H = HOOK[voice()];
     var L = [];
+    if (PLAY && !c.guest) {
+      /* 무료·광고형: 요금제 대신 '무료로 열려 있음'을 알리고 콘텐츠로 안내 */
+      L.push({ t: f(H.playOpen, c, r) });
+      if (c.ny && c.cautionM) L.push({ t: f(H.vipCaution, c, r + 1), cta: "annual" });
+      L.push({ t: f(H.vipClose, c, r + 2), cta: c.ny ? "annual" : "numbers" });
+      return L;
+    }
     if (c.tier === "vip") {
       L.push(f(H.vip, c, r));
       if (c.ny && c.cautionM) L.push({ t: f(H.vipCaution, c, r + 1), cta: "annual" });
@@ -908,6 +927,32 @@
     var note = "";
 
     function add(go, label, cls) { rows.push({ go: go, label: label, cls: cls || "btn-primary" }); }
+
+    if (PLAY) {
+      /* 무료·광고형: 결제 안내 대신 무료 이용 안내 */
+      if (kind === "birth") {
+        add("saju", "내 사주 입력하고 점사 듣기", "btn-gold");
+        note = "생년월일은 이 기기 안에서만 계산·저장돼요";
+      } else if (kind === "signup" && !user) {
+        add("signup", "무료 회원가입하고 마저 듣기", "btn-gold");
+        note = "가입 30초 · 모든 기능 무료 · 계정은 이 기기에만 저장";
+      } else if (kind === "wish") {
+        add("wish", "3일 소원 부적 만들기", "btn-gold");
+        note = "카드 만들기·원본 저장 모두 무료예요";
+      } else if (kind === "annual") {
+        add("annual", "2027 신년 총운세 보기", "btn-gold");
+        note = "네 갈래 총운과 열두 달 전체가 열려 있어요";
+      } else {
+        add("numbers", "오늘의 5조합 보기", "btn-gold");
+        note = "광고를 포함한 무료 앱이에요";
+      }
+      return '<div class="wt-cta-box">' +
+        '<div class="wt-cta-btns">' + rows.map(function (r) {
+          return '<button type="button" class="btn ' + r.cls + '" data-wt-go="' + r.go + '">' + esc(r.label) + "</button>";
+        }).join("") + "</div>" +
+        (note ? '<p class="wt-cta-note">' + esc(note) + "</p>" : "") +
+        "</div>";
+    }
 
     if (kind === "birth") {
       add("saju", "내 사주 입력하고 점사 듣기", "btn-gold");

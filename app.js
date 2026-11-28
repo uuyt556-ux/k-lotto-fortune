@@ -2,6 +2,9 @@
 (function () {
   "use strict";
 
+  /* 플레이스토어 앱(?channel=play)은 무료·광고형 모드로 동작합니다 */
+  var PLAY = !!window.BOKCHAE_PLAY;
+
   var LS = {
     saju: "unmyeong.saju.v1",
     saved: "unmyeong.saved.v1",
@@ -552,7 +555,7 @@
     var t = M ? M.tier() : "free";
     var info = weekInfo();
     var tag = $("#weeklyRound");
-    if (tag) tag.textContent = paid ? ((M && M.TIER_NAME && M.TIER_NAME[t]) || "복채 패스") : "복채 패스";
+    if (tag) tag.textContent = paid ? (PLAY ? "무료 개방" : ((M && M.TIER_NAME && M.TIER_NAME[t]) || "복채 패스")) : "복채 패스";
 
     if (!paid) {
       body.innerHTML =
@@ -669,9 +672,26 @@
 
   /* ───── 보상형 광고(모의) ───── */
   var adTimer = null;
+  var AD_TXT = PLAY
+    ? {
+        title: "잠시 후 열립니다",
+        desc: "무료로 이용 중이에요 · 짧은 광고가 끝나면 오늘의 5조합과 사주 리포트가 열립니다.",
+        doneTitle: "열렸습니다",
+        doneDesc: "오늘의 황금 5조합과 상세 사주 리포트가 열렸습니다.",
+        doneBtn: "5조합 · 리포트 열기"
+      }
+    : {
+        title: "복채를 받는 중",
+        desc: "짧게 기다리면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.",
+        doneTitle: "복채를 받았습니다",
+        doneDesc: "오늘의 황금 5조합과 상세 사주 리포트가 열렸습니다.",
+        doneBtn: "5조합 · 리포트 열기"
+      };
   function openAd() {
     var modal = $("#adModal");
     modal.classList.add("show");
+    $("#adTitle").textContent = AD_TXT.title;
+    $("#adDesc").textContent = AD_TXT.desc;
     var sec = 3, total = 3;
     $("#adSec").textContent = sec;
     $("#adDone").disabled = true;
@@ -686,10 +706,10 @@
       if (sec <= 0) {
         clearInterval(adTimer);
         $("#adDone").disabled = false;
-        $("#adDone").textContent = "5조합 · 리포트 열기";
+        $("#adDone").textContent = AD_TXT.doneBtn;
         $("#adSec").textContent = "✓";
-        $("#adTitle").textContent = "복채를 받았습니다";
-        $("#adDesc").textContent = "오늘의 황금 5조합과 상세 사주 리포트가 열렸습니다.";
+        $("#adTitle").textContent = AD_TXT.doneTitle;
+        $("#adDesc").textContent = AD_TXT.doneDesc;
       } else {
         $("#adSec").textContent = sec;
       }
@@ -698,8 +718,8 @@
   function closeAd() {
     clearInterval(adTimer);
     $("#adModal").classList.remove("show");
-    $("#adTitle").textContent = "복채를 받는 중";
-    $("#adDesc").textContent = "짧게 기다리면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.";
+    $("#adTitle").textContent = AD_TXT.title;
+    $("#adDesc").textContent = AD_TXT.desc;
   }
   function unlock() {
     state.unlocked = true;
@@ -842,6 +862,10 @@
     var paid = !!(window.Membership && window.Membership.has("noAds"));
     var bar = $("#adbar");
     if (bar) {
+      if (PLAY) {
+        var slot = $(".ad-slot", bar);
+        if (slot) slot.textContent = "복채로또 · 이번 주 복채 5조합 무료 공개 · 2027 총운 전체 열림";
+      }
       if (paid) {
         bar.style.display = "none";
       } else {
@@ -851,6 +875,39 @@
       }
     }
     document.body.classList.toggle("vip-theme", !!(window.Membership && window.Membership.has("vipTheme")));
+  }
+
+  /* 플레이스토어 무료·광고형 화면 적용 — 결제를 안내하는 문구를 광고 톤으로 바꿉니다 */
+  function applyPlayUi() {
+    /* 하단 내비: '멤버십' → '심층' (요금제 대신 심층 콘텐츠 모음) */
+    var navM = $("#navMembership");
+    if (navM) {
+      Array.prototype.slice.call(navM.childNodes).forEach(function (n) {
+        if (n.nodeType === 3 && n.textContent.trim()) n.textContent = " 심층 ";
+      });
+    }
+    /* 멤버십 화면 기본 탭: 요금제 대신 '정밀 10조합' (탭 리스너가 붙은 뒤 실행) */
+    var ten = $('[data-tabgroup="membership"] [data-tab="ten"]');
+    if (ten) setTimeout(function () { ten.click(); }, 0);
+    /* 개인정보처리방침도 같은 채널로 엽니다 */
+    var pl = $("#privacyLink");
+    if (pl) pl.setAttribute("href", "./privacy.html?channel=play");
+    /* 오늘의 5조합 잠금 문구 — 결제 유도 대신 광고 톤으로 */
+    var tenTitle = $("#ten-title");
+    if (tenTitle) tenTitle.textContent = "이번 주 정밀 10조합";
+    var lock = $("#comboLock");
+    if (lock) {
+      lock.innerHTML =
+        '<div class="pouch" aria-hidden="true">🧧</div>' +
+        '<h3>오늘의 황금 5조합 + 상세 사주 리포트</h3>' +
+        '<p>짧은 광고를 보면 오늘의 다섯 조합과 사주 풀이가 열립니다.<br />무료로 이용 중이에요.</p>' +
+        '<button type="button" class="btn btn-gold" id="unlockBtn">5조합 보기 <small>무료</small></button>' +
+        '<p class="tiny">광고는 3초 카운트다운으로 재생됩니다 · 하루 1회</p>';
+    }
+    /* 광고 대기 모달 문구 */
+    var adTitle = $("#adTitle"), adDesc = $("#adDesc");
+    if (adTitle) adTitle.textContent = AD_TXT.title;
+    if (adDesc) adDesc.textContent = AD_TXT.desc;
   }
 
   document.addEventListener("unmyeong:tier", function () {
@@ -899,6 +956,7 @@
     renderSaved();
     renderLatest();
     renderNumbers();
+    if (PLAY) applyPlayUi();
     bind();
 
     /* 첫 화면: 주소에 섹션 해시가 있으면 그 화면을, 없으면 오늘의 기운 */

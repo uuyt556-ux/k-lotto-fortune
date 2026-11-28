@@ -75,6 +75,12 @@
 
   var TIER_NAME = { free: "무료 회원", monthly: "복채 패스", annual: "1년 패스", vip: "황금 사주 패스" };
 
+  /* ───────── 채널 ─────────
+     플레이스토어 앱(?channel=play)은 무료·광고형 모드로 동작합니다.
+     · 모든 콘텐츠(총운·분야별·주의할 달·5조합·길일 달력·부적 카드)를 무료 개방
+     · 광고 대체 톤(자체 배너 + 3초 대기)은 유지, 계좌이체·이용권 코드·요금표는 사용하지 않음 */
+  var PLAY = !!global.BOKCHAE_PLAY;
+
   /* ───────── 입금 계좌 ───────── */
   var BANK = {
     bank: "카카오뱅크",
@@ -224,10 +230,16 @@
     return sub ? sub.tier : "free";
   }
   function has(feature) {
+    if (PLAY) {
+      /* 무료·광고형: 유료 콘텐츠는 전부 열고, 광고(자체 배너·3초 대기)는 유지 */
+      if (feature === "noAds" || feature === "goldInstant") return false;
+      return true;
+    }
     var f = FEATURES[tier()] || FEATURES.free;
     return !!f[feature];
   }
   function saveLimit() {
+    if (PLAY) return 0; /* 플레이스토어 모드: 내 번호 저장 제한 없음 */
     var f = FEATURES[tier()] || FEATURES.free;
     return f.saveLimit; // 0 = 무제한
   }
@@ -528,6 +540,13 @@
   function renderMemberBar() {
     var el = $("#memberBar");
     if (!el) return;
+    if (PLAY) {
+      el.hidden = false;
+      el.className = "member-bar tier-free";
+      el.innerHTML = '<span class="mb-badge">무료 이용</span>' +
+        "<span>모든 콘텐츠가 열려 있습니다 · 광고를 포함한 무료 앱입니다.</span>";
+      return;
+    }
     var t = tier();
     if (t === "free") { el.hidden = true; el.innerHTML = ""; return; }
     el.hidden = false;
@@ -591,6 +610,7 @@
   function renderPlans() {
     var box = $("#planList");
     if (!box) return;
+    if (PLAY) { box.innerHTML = ""; return; } /* 스토어 모드: 요금표를 그리지 않음 */
     var t = tier();
     var free = {
       id: "free", tier: "free", name: "무료 회원", hanja: "無",
@@ -650,6 +670,46 @@
     var body = $("#myBody");
     if (!body) return;
     var u = currentUser();
+
+    /* 플레이스토어 무료·광고형: 계정·알림만 보여 주고 요금제·이용권 문구는 쓰지 않습니다 */
+    if (PLAY) {
+      var savedP = load(K.saved, []) || [];
+      var limitP = saveLimit();
+      if (!u) {
+        body.innerHTML =
+          '<div class="my-guest">' +
+            '<p>로그인하면 이 기기 안에서 내 사주·저장한 번호를 이어서 볼 수 있습니다.<br />모든 기능은 <b>무료</b>로 이용 중입니다.</p>' +
+            '<button type="button" class="btn btn-primary" data-my="signup">회원가입</button>' +
+            '<button type="button" class="btn btn-ghost" data-my="login" style="margin-top:8px">로그인</button>' +
+          "</div>" +
+          '<p class="tiny center">계정 정보는 이 기기에만 저장됩니다 · 결제 기능 없음</p>' +
+          '<div class="btn-row" style="margin-top:10px"><button type="button" class="btn btn-ghost" data-my="plans">심층 리포트 보기</button></div>';
+        bindMy();
+        return;
+      }
+      var pP = prefs();
+      body.innerHTML =
+        '<div class="who">' +
+          '<span class="who-avatar">' + esc((displayName() || "?").slice(0, 1)) + "</span>" +
+          '<span class="who-txt"><b>' + esc(displayName()) + "</b><small>" + esc(u.email) + " · 가입 " + fmtDate(u.createdAt) + "</small></span>" +
+          '<span class="tier-pill tier-free">무료 이용</span>' +
+        "</div>" +
+        '<div class="kv-list">' +
+          '<div class="kv"><span>이용 상태</span><b>무료 · 모든 기능 열림</b></div>' +
+          '<div class="kv"><span>내 번호 저장</span><b>' + savedP.length + " / " + (limitP ? limitP + "개" : "무제한") + "</b></div>" +
+          '<div class="kv"><span>이번 주 복채 5조합</span><b>' + weekLine() + "</b></div>" +
+        "</div>" +
+        '<p class="tiny center" style="margin:10px 0 0">광고를 포함한 무료 앱입니다 · 결제·구독 기능이 없습니다.</p>' +
+        '<div class="card-head" style="margin:16px 0 6px"><span class="hanja">告</span><h2 style="font-size:14px">알림 설정</h2><span class="rule"></span></div>' +
+        toggleRow("prefWeekly", "매주 토요일 당첨 알림", "토요일 추첨 후 내 번호 결과를 알려 드립니다 (앱 출시 후 푸시)", !!pP.weekly, false) +
+        toggleRow("prefLucky", "명당 기운 길일 알림", "재물운이 높은 날을 미리 알려 드립니다", !!pP.luckyDay, false) +
+        '<div class="btn-row" style="margin-top:8px">' +
+          '<button type="button" class="btn btn-ghost" data-my="signout">로그아웃</button>' +
+          '<button type="button" class="btn btn-ghost" data-my="delete">회원 탈퇴</button>' +
+        "</div>";
+      bindMy();
+      return;
+    }
 
     if (!u) {
       body.innerHTML =
@@ -760,6 +820,8 @@
 
   /* ───────── 결제창 (계좌이체 + 이용권 코드) ───────── */
   function openPay(planId) {
+    /* 플레이스토어 모드: 결제창을 열지 않습니다(모든 기능 무료) */
+    if (PLAY) { toast("플레이스토어 버전은 모든 기능을 무료로 이용합니다"); return; }
     var plan = PLANS[planId];
     if (!plan) return;
     if (!currentUser()) {
@@ -936,9 +998,9 @@
     if (lf) lf.addEventListener("submit", signIn);
     if (sf) sf.addEventListener("submit", signUp);
 
-    /* 멤버십·내 정보 탭 상단의 이용권 코드 상자 */
+    /* 멤버십·내 정보 탭 상단의 이용권 코드 상자 (웹 전용) */
     var topBox = $("#voucherTop");
-    if (topBox) {
+    if (topBox && !PLAY) {
       topBox.innerHTML = voucherBoxHtml("top", "이용권 코드 등록");
       bindPayBox(topBox, "top", function (r) {
         if (r.kind === "wish") { toast("3일 소원 부적 이용권이 등록되었습니다"); return; }

@@ -7,6 +7,8 @@
 
   var S = global.Saju;
   var M = global.Membership;
+  /* 플레이스토어 무료·광고형 모드: 콘텐츠 태그를 '무료 개방'으로 표시 */
+  var PLAY = !!global.BOKCHAE_PLAY;
 
   var GEN = { 목: "화", 화: "토", 토: "금", 금: "수", 수: "목" };     // 내가 생하는(식상)
   var GEN_BY = { 화: "목", 토: "화", 금: "토", 수: "금", 목: "수" };  // 나를 생하는(인성)
@@ -98,7 +100,7 @@
     var el = document.getElementById(id);
     if (!el) return;
     var on = M && M.has(feat);
-    el.textContent = on ? "이용 중" : label;
+    el.textContent = on ? (PLAY ? "무료 개방" : "이용 중") : label;
     el.classList.toggle("on", !!on);
   }
 
@@ -728,12 +730,12 @@
     s.pick = null;
     return true;
   }
-  function buyFull() { return !!(M && M.has("noAds")); }
+  function buyFull() { return PLAY || !!(M && M.has("noAds")); }
 
   function renderBuy() {
     var box = $("#buyBody");
     if (!box) return;
-    tagUpdate("buyTag", "noAds", "복채 패스");
+    tagUpdate("buyTag", PLAY ? "luckyDay" : "noAds", "복채 패스");
     var a = analysis();
     if (!a) { box.innerHTML = needSaju("로또 구매 길일 달력"); bindCommon(box); return; }
 

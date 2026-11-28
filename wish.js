@@ -11,6 +11,8 @@
   var K = { orders: "unmyeong.wish.orders.v1" };
   var FILE_NAME = "복채로또_3일소원부적.png";
   var PRICE = 10000;
+  /* 플레이스토어 무료·광고형 모드: 부적 카드도 무료로 만들고 저장 */
+  var PLAY = !!global.BOKCHAE_PLAY;
 
   var state = { wish: "", paid: false, blob: null, busy: false, credit: 0 };
 
@@ -386,23 +388,25 @@
     var share = $("#wishShare");
     var hint = $("#wishHint");
     var t = teller();
+    var paid = PLAY || state.paid;
     if (lock) {
-      lock.hidden = state.paid;
+      lock.hidden = paid;
       var msg = lock.querySelector("[data-teller-line]");
       if (msg) msg.textContent = t.role + " " + t.name + " — " + t.line;
     }
     if (saveBtn) {
-      saveBtn.disabled = !state.paid;
-      saveBtn.textContent = state.paid ? "갤러리 저장 (PNG)" : "결제 후 저장할 수 있어요";
+      saveBtn.disabled = !paid;
+      saveBtn.textContent = paid ? "갤러리 저장 (PNG)" : "결제 후 저장할 수 있어요";
     }
-    if (share) share.hidden = !state.paid;
+    if (share) share.hidden = !paid;
     if (hint) {
-      hint.innerHTML = state.paid
+      hint.innerHTML = paid
         ? "고해상도(1080×1440) 원본입니다 · 이미지를 길게 눌러 ‘이미지 저장’도 가능해요"
         : "미리보기에는 워터마크가 들어갑니다 · 10,000원 이용권 등록 후 원본 저장·공유가 열립니다";
     }
     var tag = $("#wishPrice");
-    if (tag) tag.textContent = state.paid ? "소장 완료" : "1건 10,000원";
+    if (tag) tag.textContent = paid ? "소장 완료" : "1건 10,000원";
+    if (PLAY && tag) tag.textContent = "무료";
   }
 
   function issue() {
@@ -412,18 +416,19 @@
     if (wish.length > 40) { toast("소원은 40자까지 적을 수 있어요"); return; }
     state.wish = wish;
     /* 이용권을 먼저 등록해 둔 경우에는 첫 카드부터 열어 줍니다 (등록 1건 = 카드 1장) */
-    state.paid = !!(state.credit > 0);
+    state.paid = PLAY || !!(state.credit > 0);
     if (state.paid) state.credit = 0;
     render();
     lockUi();
     var out = $("#wishOut");
     if (out) out.hidden = false;
-    toast("부적 카드를 만들었어요 · 미리보기를 확인해 보세요");
+    toast(PLAY ? "부적 카드를 만들었어요 · 저장하거나 공유해 보세요" : "부적 카드를 만들었어요 · 미리보기를 확인해 보세요");
     if (out) setTimeout(function () { out.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120);
   }
 
   /* ───────── 단건 상품 결제 (계좌이체 + 이용권 코드) ───────── */
   function openBuy() {
+    if (PLAY) { toast("플레이스토어 버전은 소원 부적을 무료로 만들 수 있어요"); return; }
     var body = document.getElementById("payBody");
     var modal = document.getElementById("payModal");
     var M = global.Membership;
@@ -530,6 +535,10 @@
   function init() {
     var sec = $("#wish");
     if (!sec) return;
+    if (PLAY) {
+      var makeBtn = $("#wishMake");
+      if (makeBtn) makeBtn.innerHTML = "소원 부적·카드 만들기 <small>무료</small>";
+    }
     lockUi();
     var make = $("#wishMake");
     if (make) make.addEventListener("click", issue);
@@ -548,7 +557,7 @@
     try {
       var orders = load(K.orders, []) || [];
       var last = orders[0];
-      if (last && last.at && (Date.now() - new Date(last.at).getTime()) < 1000 * 60 * 60 * 24 * 3 && input && !input.value) {
+      if (last && last.at && (Date.now() - new Date(last.at).getTime()) < 1000 * 60 * 60 * 24 * 3 && input && !input.value && !PLAY) {
         /* 최근 3일 내 구매 기록이 있으면 안내만 남깁니다 (카드는 다시 만들어 결제) */
         $("#wishHint").innerHTML = "최근 소장한 부적이 있어요 · 새 소원은 새 카드로 발급됩니다 (1건 10,000원)";
       }
