@@ -349,17 +349,17 @@
     if (!info.round) return null;
     var bag = load(LS.weekly, {}) || {};
     var ownerBag = bag[weekOwner()] || {};
+    var wkKey = state.birth.key + "|weekly";   /* 일일 황금 5조합과 겹치지 않는 주간 전용 씨앗 */
     var rec = ownerBag[info.round];
-    if (rec && rec.birthKey === state.birth.key && rec.combos && rec.combos.length === 5) return rec;
+    if (rec && rec.birthKey === wkKey && rec.combos && rec.combos.length === 5) return rec;
 
     var seedDate = new Date(info.date.getTime());
     seedDate.setHours(12, 0, 0, 0);
-    /* 일일 황금 5조합과 겹치지 않도록 주간 전용 씨앗을 씁니다 */
-    var gen = Saju.recommend(state.analysis, state.birth.key + "|weekly", seedDate, (state.data && state.data.draws) || []);
+    var gen = Saju.recommend(state.analysis, wkKey, seedDate, (state.data && state.data.draws) || []);
     rec = {
       round: info.round,
       date: info.key,
-      birthKey: state.birth.key,
+      birthKey: wkKey,
       combos: gen.combos.slice(0, 5).map(function (c) {
         return { id: c.id, title: c.title, nums: c.nums, tags: c.tags, q: c.q, desc: c.desc };
       }),
