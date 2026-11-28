@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#1E1B18" />
+<meta name="description" content="복채로또 - 사주와 2027 신년 재물운으로 로또 6/45 번호를 고르는 앱. 생년월일만 넣으면 웹툰 점술사가 오늘의 기운과 2027 정미년 재물운을 내 사주에 맞춰 풀어 주고, 무료로 시작해 월간·연간·VIP 멤버십으로 광고 없이 매일 황금 5조합과 심층 사주 리포트를 받아 볼 수 있습니다." />
+<meta name="robots" content="index,follow" />
+<meta property="og:title" content="복채로또 - 사주·2027 재물운 번호" />
+<meta property="og:description" content="2027 신년 재물운과 내 사주로 고르는 6/45. 번호마다 이유가 있습니다." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="./icon-512.png" />
+<title>복채로또 - 사주·2027 재물운 번호</title>
+<link rel="manifest" href="./manifest.json" />
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css?v=12" />
+<link rel="stylesheet" href="webtoon.css?v=12" />
+<style>
+/* 인트로 스플래시 — 외부 CSS를 기다리지 않고 첫 페인트부터 화면을 덮도록 하는 최소 스타일 */
+html.splashing { background-color: #100E0C; }
+html.splashing, html.splashing body { overflow: hidden; }
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: grid; place-items: center; overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% 6%, #2A2318 0%, rgba(42, 35, 24, 0) 60%),
+    radial-gradient(100% 62% at 50% 104%, #1B1712 0%, rgba(27, 23, 18, 0) 72%),
+    linear-gradient(180deg, #100E0C 0%, #171310 54%, #0B0A08 100%);
+  color: #FBF7EE;
+}
+#splash.is-out { opacity: 0; visibility: hidden; }
+#splash .sp-seal,
+#splash .sp-title,
+#splash .sp-rule,
+#splash .sp-sub,
+#splash .sp-hint { opacity: 0; }
+</style>
+</head>
+<body>
+
+<!-- ───── 인트로 스플래시 ───── -->
+<div id="splash" class="splash" aria-hidden="true">
+  <div class="sp-bg">
+    <div class="sp-grain"></div>
+    <div class="sp-moon"></div>
+    <div class="sp-ring"></div>
+    <div class="sp-sparks">
+      <i style="--x:8%;--s:3px;--t:9.5s;--d:0s"></i>
+      <i style="--x:17%;--s:2px;--t:12s;--d:2.4s"></i>
+      <i style="--x:27%;--s:2.5px;--t:10.5s;--d:5.1s"></i>
+      <i style="--x:39%;--s:2px;--t:13.5s;--d:1.2s"></i>
+      <i style="--x:47%;--s:3.5px;--t:8.6s;--d:3.8s"></i>
+      <i style="--x:56%;--s:2px;--t:11.4s;--d:6.4s"></i>
+      <i style="--x:64%;--s:2.5px;--t:9s;--d:2s"></i>
+      <i style="--x:72%;--s:3px;--t:12.6s;--d:4.6s"></i>
+      <i style="--x:81%;--s:2px;--t:10s;--d:7.2s"></i>
+      <i style="--x:89%;--s:3px;--t:13s;--d:1.8s"></i>
+      <i style="--x:22%;--s:2px;--t:14s;--d:8.4s"></i>
+      <i style="--x:93%;--s:2px;--t:11s;--d:5.7s"></i>
+    </div>
+    <div class="sp-frame"><b></b><b></b><b></b><b></b></div>
+  </div>
+  <div class="sp-core">
+    <div class="sp-seal">運<small>命</small></div>
+    <div class="sp-title">복채로또</div>
+    <div class="sp-rule"><i></i><span>福</span><i></i></div>
+    <p class="sp-sub">사주 · 2027 신년 재물운 번호</p>
+    <p class="sp-hint">화면을 누르면 바로 시작합니다</p>
+  </div>
+</div>
+<script>
+/* 인트로 스플래시 제어 — 제목이 다 떠오른 뒤(1.9초) 부드럽게 걷히고, 탭하면 바로 건너뜁니다. */
+(function () {
+  var el = document.getElementById('splash');
+  if (!el) return;
+  var root = document.documentElement;
+  root.classList.add('splashing');
+  var done = false;
+
+  function hide() {
+    if (done) return;
+    done = true;
+    el.classList.add('is-out');
+    root.classList.remove('splashing');
+    setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+      root.classList.add('splash-done');
+    }, 700);
+  }
+
+  // 제목·부제가 떠오르는 시간을 기다렸다가 자연스럽게 전환
+  setTimeout(hide, 8000);
+  // 탭 · 클릭 · 키 입력으로 즉시 건너뛰기
+  el.addEventListener('click', hide);
+  el.addEventListener('touchstart', hide, { passive: true });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown') hide();
+  });
+  // 뒤로 가기 복원(bFCache) 시에는 스플래시를 다시 보여 주지 않습니다.
+  window.addEventListener('pageshow', function (e) { if (e.persisted) hide(); });
+})();
+</script>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <div class="seal" aria-hidden="true">運<small>命</small></div>
+      <div class="brand-text">
+        <b>복채로또</b>
+        <span>사주 · 2027 신년 재물운 번호</span>
+      </div>
+    </div>
+    <button class="acct" id="acctBtn" type="button" aria-haspopup="dialog">
+      <span class="acct-dot" id="acctDot" aria-hidden="true"></span>
+      <span class="acct-label" id="acctLabel">로그인</span>
+    </button>
+  </header>
+
+  <main>
+    <!-- 오늘의 기운 -->
+    <section id="today" class="card hero" aria-labelledby="today-title">
+      <div class="hero-tag" id="heroTag">🏮 2027 신년 재물운 · 사주 번호</div>
+      <div class="hero-date" id="todayDate">오늘의 기운</div>
+      <h1 id="today-title" class="sr">오늘의 기운과 재물운</h1>
+      <div class="hero-main">
+        <div class="hero-gz">
+          <div class="gz" id="todayGz">乙巳<small id="todayGzSub">을사일</small></div>
+          <div class="gz-sub" id="todayElLine">오늘의 기운 <b>木 · 火</b></div>
+        </div>
+        <div class="gauge" aria-label="오늘의 재물운 점수">
+          <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="42" fill="none" stroke="rgba(30,27,24,.08)" stroke-width="7" />
+            <circle id="gaugeArc" cx="48" cy="48" r="42" fill="none" stroke="url(#gaugeGold)" stroke-width="7"
+              stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264" />
+            <defs>
+              <linearGradient id="gaugeGold" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#E7C87A" />
+                <stop offset="55%" stop-color="#C9972C" />
+                <stop offset="100%" stop-color="#9A6F16" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="val"><b id="gaugeVal">--</b><span>재물운</span></div>
+        </div>
+      </div>
+      <div class="hero-note" id="todayNote">생년월일을 넣으면 2027 신년 재물운과 오늘의 기운을 내 사주와 함께 읽어 드립니다.</div>
+      <div class="hero-chips" id="todayChips"></div>
+      <button type="button" class="wt-hero-btn" data-wt-open>
+        <b>占</b> 오늘의 웹툰 점사 듣기 <span aria-hidden="true">→</span>
+      </button>
+    </section>
+
+    <!-- 웹툰 점집 (성별 맞춤 점술사) -->
+    <section id="webtoon" class="card wt-card" aria-labelledby="wt-title">
+      <div class="card-head">
+        <span class="hanja">占</span>
+        <h2 id="wt-title">웹툰 점집</h2>
+        <span class="right" id="wtRole">미녀 점술사 · 설아</span>
+      </div>
+
+      <div class="seg wt-seg" role="group" aria-label="점술사 캐릭터 선택">
+        <button type="button" data-teller="male" class="on">미녀 점술사</button>
+        <button type="button" data-teller="female">점집 미소년</button>
+      </div>
+
+      <div class="wt-stage" id="wtStage"></div>
+
+      <div class="wt-ctl">
+        <button type="button" class="wt-round" data-wt-prev aria-label="이전 대사">‹</button>
+        <div class="wt-dots" id="wtDotsInline" aria-hidden="true"></div>
+        <button type="button" class="wt-round wt-round-next" data-wt-next aria-label="다음 대사">›</button>
+        <button type="button" class="wt-mini" data-wt-open>크게 보기</button>
+      </div>
+      <label class="wt-auto"><input type="checkbox" data-wt-auto id="wtAutoInline" /> 자동 재생</label>
+      <div class="wt-cta" id="wtCtaInline" hidden></div>
+    </section>
+
+    <!-- 사주 입력 -->
+    <section id="saju" class="card" aria-labelledby="saju-title">
+      <div class="card-head">
+        <span class="hanja">四柱</span>
+        <h2 id="saju-title">내 사주</h2>
+        <span class="rule"></span>
+      </div>
+
+      <form id="sajuForm" autocomplete="off">
+        <div class="field">
+          <label>달력 기준</label>
+          <div class="seg" id="calSeg" role="group" aria-label="양력 음력 선택">
+            <button type="button" data-cal="solar" class="on">양력</button>
+            <button type="button" data-cal="lunar">음력</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>내 성별 <span class="opt">점술사 캐릭터</span></label>
+          <div class="seg" role="group" aria-label="내 성별 선택">
+            <button type="button" data-gender="male" class="on">남성</button>
+            <button type="button" data-gender="female">여성</button>
+          </div>
+          <div class="hint">남성을 고르면 미녀 점술사가, 여성을 고르면 점집 미소년이 사주를 풀어 드립니다.</div>
+        </div>
+        <div class="field">
+          <label for="birthDate">생년월일</label>
+          <input type="date" id="birthDate" min="1900-01-01" max="2050-12-31" required />
+          <div class="hint" id="calHint">양력(현재 달력) 기준으로 입력합니다.</div>
+        </div>
+        <div class="field" id="leapRow" hidden>
+          <label class="chk"><input type="checkbox" id="leapChk" /> 윤달(閏月)생입니다</label>
+        </div>
+        <div class="field">
+          <label for="birthHour">태어난 시간</label>
+          <select id="birthHour"></select>
+          <div class="hint">모르면 ‘모름’으로 두세요. 세 기둥(년·월·일)으로 계산합니다.</div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="sajuSubmit">사주 보고 번호 받기</button>
+      </form>
+
+      <div id="sajuResult" hidden>
+        <div class="pillars" id="pillars"></div>
+        <div class="saju-summary" id="sajuSummary"></div>
+        <div class="saju-badges" id="sajuBadges"></div>
+        <div class="balance" id="sajuBalance"></div>
+        <div class="btn-row" style="margin-top:14px">
+          <button type="button" class="btn btn-ghost" id="sajuEdit">사주 다시 입력</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 추천 번호 -->
+    <section id="numbers" class="card" aria-labelledby="numbers-title">
+      <div class="card-head">
+        <span class="hanja">番</span>
+        <h2 id="numbers-title">오늘의 번호</h2>
+        <span class="right" id="numbersFor">사주 미입력</span>
+      </div>
+
+      <div id="memberBar" class="member-bar" hidden></div>
+
+      <div id="comboFree"></div>
+
+      <div id="comboLock" class="lock" style="margin-top:12px">
+        <div class="pouch" aria-hidden="true">🧧</div>
+        <h3>황금 5조합 + 상세 사주 리포트</h3>
+        <p>복채(짧은 광고 1회)를 내면<br />오늘의 다섯 조합과 사주 풀이가 열립니다.</p>
+        <button type="button" class="btn btn-gold" id="unlockBtn">복채 보고 5조합 열기 <small>무료</small></button>
+        <p class="tiny">광고는 3초 카운트다운으로 재생됩니다 · 하루 1회</p>
+      </div>
+
+      <div id="comboPaid" hidden></div>
+
+      <p class="hint" style="margin-top:12px">번호는 사주·오늘 일진·최근 회차 통계로 매일 새로 계산됩니다. 같은 날에는 같은 조합이 나옵니다.</p>
+    </section>
+
+    <!-- 이번 주 내 복채 5조합 (유료 회원 자동 발급) -->
+    <section id="weekly" class="card weekly" aria-labelledby="weekly-title">
+      <div class="card-head">
+        <span class="hanja">週</span>
+        <h2 id="weekly-title">이번 주 내 복채 5조합</h2>
+        <span class="right" id="weeklyRound">복채 패스</span>
+      </div>
+      <div id="weeklyBody"></div>
+    </section>
+
+    <!-- 3일 소원 부적·카드 (단건 상품 10,000원) -->
+    <section id="wish" class="card wish-sec" aria-labelledby="wish-title">
+      <div class="card-head">
+        <span class="hanja">願</span>
+        <h2 id="wish-title">3일 소원 부적·카드</h2>
+        <span class="right" id="wishPrice">1건 10,000원</span>
+      </div>
+      <p class="hint" style="margin:0 0 10px">소원을 한 줄 적으면 사주·오행 기운을 담은 부적 카드를 만들어 드립니다. 사흘 동안 간직하고, 이루어지길 기원하세요.</p>
+      <div class="field">
+        <label for="wishInput">내 소원 <span class="opt">40자 이내</span></label>
+        <input type="text" id="wishInput" maxlength="40" placeholder="예) 이번 달 복채로 가족 여행을 다녀오게 해 주세요" />
+      </div>
+      <div class="btn-row" style="margin-top:10px">
+        <button type="button" class="btn btn-gold" id="wishMake">소원 부적·카드 만들기 <small>미리보기 무료</small></button>
+      </div>
+      <div id="wishOut" hidden>
+        <div class="wish-stage">
+          <canvas id="wishCanvas" width="1080" height="1440" aria-label="3일 소원 부적 카드"></canvas>
+          <div class="wish-lock" id="wishLock">
+            <span class="wish-lock-ico" aria-hidden="true">🔒</span>
+            <p class="wish-teller" data-teller-line>미녀 점술사 설아 — 복채를 내야 부적에 힘이 생깁니다.</p>
+            <button type="button" class="btn btn-gold" id="wishBuy">10,000원 복채 내고 소원 부적 소장하기</button>
+            <p class="tiny">구독 요금제와 별개의 단건 상품 · 테스트 결제 (실제 청구 없음)</p>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:12px">
+          <button type="button" class="btn btn-primary" id="wishSave" disabled>결제 후 저장할 수 있어요</button>
+          <button type="button" class="btn btn-ghost" id="wishShare" hidden>공유하기</button>
+        </div>
+        <p class="tiny" id="wishHint">미리보기에는 워터마크가 들어갑니다 · 10,000원 결제 후 원본 저장·공유가 열립니다</p>
+      </div>
+    </section>
+
+    <!-- VIP 전용 10조합 -->
+    <section id="tencombos" class="card premium" aria-labelledby="ten-title">
+      <div class="card-head">
+        <span class="hanja">十</span>
+        <h2 id="ten-title">이번 주 VIP 정밀 10조합</h2>
+        <span class="right gate-tag" id="tenTag">VIP</span>
+      </div>
+      <div class="gate" id="tenBody"></div>
+    </section>
+
+    <!-- VIP 심층 리포트 -->
+    <section id="deep" class="card premium" aria-labelledby="deep-title">
+      <div class="card-head">
+        <span class="hanja">命</span>
+        <h2 id="deep-title">1:1 사주 오행 심층 리포트</h2>
+        <span class="right gate-tag" id="deepTag">VIP</span>
+      </div>
+      <div class="gate" id="deepBody"></div>
+    </section>
+
+    <!-- 1년 재물운 캘린더 -->
+    <section id="calendar" class="card premium" aria-labelledby="cal-title">
+      <div class="card-head">
+        <span class="hanja">運</span>
+        <h2 id="cal-title">1년 대운 · 월별 재물운</h2>
+        <span class="right gate-tag" id="calTag">연간</span>
+      </div>
+      <div class="gate" id="calBody"></div>
+    </section>
+
+    <!-- VIP 명당 기운 길일 -->
+    <section id="lucky" class="card premium" aria-labelledby="lucky-title">
+      <div class="card-head">
+        <span class="hanja">吉</span>
+        <h2 id="lucky-title">명당 기운 길일</h2>
+        <span class="right gate-tag" id="luckyTag">VIP</span>
+      </div>
+      <div class="gate" id="luckyBody"></div>
+    </section>
+
+    <!-- 최신 회차 -->
+    <section id="draw" class="card" aria-labelledby="draw-title">
+      <div class="card-head">
+        <span class="hanja">當</span>
+        <h2 id="draw-title">최신 당첨번호</h2>
+        <span class="rule"></span>
+      </div>
+      <div id="latestDraw">
+        <div class="empty">회차 정보를 불러오는 중입니다…</div>
+      </div>
+      <details class="past" id="pastWrap">
+        <summary>지난 회차 보기</summary>
+        <div id="pastList"></div>
+      </details>
+      <p class="hint" id="dataMeta">출처: 동행복권</p>
+    </section>
+
+    <!-- 내 번호 -->
+    <section id="saved" class="card" aria-labelledby="saved-title">
+      <div class="card-head">
+        <span class="hanja">記</span>
+        <h2 id="saved-title">내 번호 기록</h2>
+        <span class="right" id="savedCount">0조합</span>
+      </div>
+      <div id="savedList"><div class="empty">마음에 드는 조합을 저장해 보세요. 저장한 번호는 최신 회차와 자동으로 대조합니다.</div></div>
+      <div class="btn-row" style="margin-top:12px">
+        <button type="button" class="btn btn-ghost" id="checkBtn">당첨 확인</button>
+        <button type="button" class="btn btn-ghost" id="clearBtn">전체 삭제</button>
+      </div>
+      <p class="hint" id="savedLimitHint"></p>
+    </section>
+
+    <!-- 멤버십 · 요금제 -->
+    <section id="membership" class="card" aria-labelledby="membership-title">
+      <div class="card-head">
+        <span class="hanja">會</span>
+        <h2 id="membership-title">멤버십 · 요금제</h2>
+        <span class="right" id="tierNow">무료 회원</span>
+      </div>
+
+      <div class="beta-note">
+        <b>베타 · 테스트 결제 모드</b>
+        <p>지금은 실제로 청구되지 않는 체험 모드입니다. 버튼을 누르면 이 기기에서만 등급이 바뀌고, 모든 기능이 실제로 열립니다.
+          정식 출시 시 Google Play 인앱 결제(Google Play Billing)와 계정 서버로 교체됩니다. ‘3일 소원 부적·카드’는 구독과 별도의 <b>1건 10,000원</b> 단건 결제입니다.</p>
+      </div>
+
+      <div class="plans" id="planList"></div>
+
+      <details class="terms" id="termsBox">
+        <summary>결제 · 자동갱신 · 해지 · 환불 조건</summary>
+        <ul>
+          <li><b>요금</b> — 월간 <b>복채 패스 6,900원</b>(1개월 자동갱신) / 연간 <b>1년 패스 59,000원</b>(12개월, 월 4,917원꼴 · 약 29% 할인) / VIP <b>황금 사주 패스</b> 월 12,900원 또는 평생 89,000원(1회 결제). 부가세 포함 금액입니다.</li>
+          <li><b>매주 복채 5조합</b> — 복채 패스 이상 회원에게는 매주 토요일 추첨 회차 기준 <b>복채 5조합</b>이 자동 발급되어 회차별 보관함에 저장됩니다. VIP는 정밀 10조합까지 매주 발급됩니다.</li>
+          <li><b>단건 상품</b> — ‘3일 소원 부적·카드’는 구독 요금제와 별개의 <b>1건 10,000원</b> 상품이며, 결제 즉시 이미지가 제공되는 디지털 콘텐츠로 제공 시작 후 청약철회가 제한될 수 있습니다.</li>
+          <li><b>자동갱신</b> — 다음 결제 예정일 <b>24시간 전까지</b> 해지하면 다음 회차 금액이 청구되지 않습니다. 해지 후에도 이미 결제한 기간의 만료일까지는 그대로 이용할 수 있습니다.</li>
+          <li><b>청약철회</b> — 결제 후 7일 이내에 콘텐츠를 이용하지 않았다면 청약철회(전액 환불)할 수 있습니다. 다만 황금 5조합·심층 리포트 등 <b>디지털 콘텐츠 열람을 시작한 뒤에는 청약철회가 제한</b>될 수 있습니다(전자상거래법 제17조 제2항).</li>
+          <li><b>환불</b> — 중도 해지 시 이용하지 않은 잔여 기간에 대해 관련 법령과 스토어 정책에 따라 환불을 검토합니다. 단순 변심에 의한 부분 환불은 제한될 수 있습니다.</li>
+          <li><b>스토어 결제</b> — Google Play에서 결제하는 경우 Google Play의 환불·해지 정책이 함께 적용되며, 해지는 Google Play 구독 메뉴에서도 가능합니다.</li>
+          <li><b>가격 변경</b> — 요금이 바뀌면 최소 30일 전에 앱과 이 화면에서 알립니다.</li>
+        </ul>
+      </details>
+
+      <div class="btn-row" style="margin-top:12px">
+        <button type="button" class="btn btn-ghost" id="myPageBtn">내 정보 · 구독 관리</button>
+      </div>
+    </section>
+
+    <div class="disclaimer">
+      <b>본 서비스는 전통 명리학·오행과 통계에 기반한 재미 및 참고용 번호 추천 앱이며, 로또 당첨을 보장하지 않습니다.</b><br />
+      만 19세 미만은 구매할 수 없습니다. 도박 문제로 어려움이 있다면 한국도박문제예방치유원 1336으로 연락 바랍니다. 입력한 생년월일·시간은 이 기기 안에만 저장되며 서버로 전송되지 않습니다.
+    </div>
+
+    <footer class="foot">
+      복채로또 · 사주·2027 재물운 번호 v1.3<br />
+      <a href="./privacy.html">개인정보처리방침</a> · <a href="#today">맨 위로</a><br />
+      © 2026 복채로또
+    </footer>
+  </main>
+</div>
+
+<!-- 하단 배너 광고 자리 -->
+<div class="adbar" id="adbar">
+  <div class="adbar-inner">
+    <span class="ad-badge">AD</span>
+    <div class="ad-slot">배너 광고 영역 · AdMob 연동 예정</div>
+    <button class="ad-close" id="adClose" aria-label="광고 영역 닫기">×</button>
+  </div>
+</div>
+
+<!-- 하단 내비 -->
+<nav class="nav" aria-label="주요 메뉴">
+  <div class="nav-inner">
+    <a href="#today" class="on" data-target="today">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg>
+      운세
+    </a>
+    <a href="#saju" data-target="saju">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      사주
+    </a>
+    <a href="#numbers" data-target="numbers">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="9" r="3.2"/><circle cx="15.5" cy="9" r="3.2"/><circle cx="8.5" cy="15.5" r="3.2"/><circle cx="15.5" cy="15.5" r="3.2"/></svg>
+      번호
+    </a>
+    <a href="#saved" data-target="saved">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h9l5 5v11H5z"/><path d="M14 4v5h5M8.5 13h7M8.5 16.5h4.5"/></svg>
+      기록
+    </a>
+    <a href="#membership" data-target="membership">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l4 4-4 4-4-4z"/><path d="M4 11l3.5 3.5L12 10l4.5 4.5L20 11"/><path d="M8 20h8"/></svg>
+      멤버십
+    </a>
+  </div>
+</nav>
+
+<!-- 보상형 광고 모달 -->
+<div class="modal-back" id="adModal" role="dialog" aria-modal="true" aria-labelledby="adTitle">
+  <div class="modal">
+    <div class="seal seal-mini" aria-hidden="true" style="margin:0 auto 8px">福</div>
+    <h3 id="adTitle">복채를 받는 중</h3>
+    <p id="adDesc">짧은 광고가 끝나면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.</p>
+    <div class="countdown" id="adCount">
+      <svg viewBox="0 0 92 92" aria-hidden="true">
+        <circle cx="46" cy="46" r="41" fill="none" stroke="rgba(30,27,24,.09)" stroke-width="6" />
+        <circle id="adArc" cx="46" cy="46" r="41" fill="none" stroke="#C9972C" stroke-width="6"
+          stroke-linecap="round" stroke-dasharray="258" stroke-dashoffset="0" />
+      </svg>
+      <b id="adSec">3</b>
+    </div>
+    <button type="button" class="btn btn-gold" id="adDone" disabled>광고 시청 중…</button>
+    <button type="button" class="btn btn-ghost" id="adCancel" style="margin-top:8px">닫기</button>
+    <p class="tiny">웹 데모용 모의 광고입니다. 앱 출시 시 AdMob 보상형 광고로 교체됩니다.</p>
+  </div>
+</div>
+
+<!-- 웹툰 점사 컷신 (크게 보기) -->
+<div class="modal-back cut-back" id="cutModal" role="dialog" aria-modal="true" aria-labelledby="cutTitle">
+  <div class="cut-sheet">
+    <div class="cut-top">
+      <span class="cut-badge" aria-hidden="true">占</span>
+      <div class="cut-title">
+        <b id="cutTitle">오늘의 점사</b>
+        <span id="cutRole">미녀 점술사 · 설아</span>
+      </div>
+      <button type="button" class="cut-x" data-wt-close aria-label="점사 닫기">×</button>
+    </div>
+
+    <div class="wt-stage cut-stage" id="cutStage"></div>
+
+    <div class="cut-bar">
+      <div class="seg cut-seg" role="group" aria-label="점술사 캐릭터 선택">
+        <button type="button" data-teller="male" class="on">미녀 점술사</button>
+        <button type="button" data-teller="female">점집 미소년</button>
+      </div>
+      <div class="wt-ctl">
+        <button type="button" class="wt-round" data-wt-prev aria-label="이전 대사">‹</button>
+        <div class="wt-dots" id="cutDots"></div>
+        <button type="button" class="wt-round wt-round-next" data-wt-next aria-label="다음 대사">›</button>
+      </div>
+      <label class="wt-auto"><input type="checkbox" id="cutAuto" data-wt-auto /> 자동 재생</label>
+      <div class="wt-cta" id="cutCta" hidden></div>
+      <p class="wt-note">재미로 보는 사주 점사입니다 · 당첨을 보장하지 않아요</p>
+    </div>
+  </div>
+</div>
+
+<!-- 회원가입 · 로그인 모달 -->
+<div class="modal-back" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="modal modal-tall">
+    <button type="button" class="modal-x" data-close="authModal" aria-label="닫기">×</button>
+    <div class="seal seal-mini" aria-hidden="true">會</div>
+    <h3 id="authTitle">회원가입 · 로그인</h3>
+    <p class="tiny beta-line">베타 테스트 계정입니다. 계정 정보는 이 기기(브라우저)에만 저장되고 실제 본인인증·서버 전송은 없습니다.</p>
+
+    <div class="tabs" id="authTabs" role="tablist">
+      <button type="button" data-auth-tab="login" class="on" role="tab">로그인</button>
+      <button type="button" data-auth-tab="signup" role="tab">회원가입</button>
+    </div>
+
+    <form id="loginForm" class="auth-form" autocomplete="on">
+      <div class="field">
+        <label for="loginEmail">이메일</label>
+        <input type="email" id="loginEmail" autocomplete="username" placeholder="you@example.com" required />
+      </div>
+      <div class="field">
+        <label for="loginPass">비밀번호</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="6자 이상" minlength="6" required />
+      </div>
+      <p class="form-err" id="loginErr" hidden></p>
+      <button class="btn btn-primary" type="submit">로그인</button>
+    </form>
+
+    <form id="signupForm" class="auth-form" autocomplete="on" hidden>
+      <div class="field">
+        <label for="suNick">닉네임</label>
+        <input type="text" id="suNick" maxlength="16" placeholder="예) 원철" required />
+      </div>
+      <div class="field">
+        <label for="suEmail">이메일</label>
+        <input type="email" id="suEmail" autocomplete="username" placeholder="you@example.com" required />
+      </div>
+      <div class="field">
+        <label for="suPass">비밀번호</label>
+        <input type="password" id="suPass" autocomplete="new-password" placeholder="6자 이상" minlength="6" required />
+      </div>
+      <div class="field">
+        <label for="suBirth">생년월일 <span class="opt">선택 · 사주 연동</span></label>
+        <input type="date" id="suBirth" min="1900-01-01" max="2050-12-31" />
+      </div>
+      <label class="chk"><input type="checkbox" id="suLink" checked /> 입력한 생년월일을 내 사주에 연결</label>
+      <label class="chk"><input type="checkbox" id="suAgree" required /> <span>[필수] 이용약관 및 개인정보 수집·이용에 동의합니다 (기기 내 저장)</span></label>
+      <p class="form-err" id="signupErr" hidden></p>
+      <button class="btn btn-primary" type="submit">회원가입</button>
+    </form>
+
+    <div class="or"><span>또는</span></div>
+    <div class="social">
+      <button type="button" class="sns google" data-social="google">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-3.8V7.6H3.1a10 10 0 0 0 0 9l3.3-2.6z"/><path fill="#EA4335" d="M12 6.1c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 0 0 3.1 7.6L6.4 10c.8-2.3 3-3.9 5.6-3.9z"/></svg>
+        Google로 계속
+      </button>
+      <button type="button" class="sns kakao" data-social="kakao">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#3A1D1D" d="M12 3.5c-4.7 0-8.5 3-8.5 6.7 0 2.4 1.6 4.5 4 5.7l-1 3.6c-.1.4.3.7.7.5l4.1-2.6c.2 0 .5.1.7.1 4.7 0 8.5-3 8.5-6.7S16.7 3.5 12 3.5z"/></svg>
+        카카오로 계속
+      </button>
+    </div>
+    <p class="tiny">소셜 로그인은 데모에서 <b>원클릭 테스트 계정</b>으로 동작합니다. 실제 연동 시 각 사업자 OAuth로 교체됩니다.</p>
+  </div>
+</div>
+
+<!-- 내 정보(마이페이지) 모달 -->
+<div class="modal-back" id="myModal" role="dialog" aria-modal="true" aria-labelledby="myTitle">
+  <div class="modal modal-tall">
+    <button type="button" class="modal-x" data-close="myModal" aria-label="닫기">×</button>
+    <h3 id="myTitle">내 정보</h3>
+    <div id="myBody"></div>
+  </div>
+</div>
+
+<!-- 체험 결제 확인 모달 -->
+<div class="modal-back" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+  <div class="modal">
+    <button type="button" class="modal-x" data-close="payModal" aria-label="닫기">×</button>
+    <h3 id="payTitle">체험 결제</h3>
+    <div id="payBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="lunar.js?v=12"></script>
+<script src="saju.js?v=12"></script>
+<script src="account.js?v=12"></script>
+<script src="premium.js?v=12"></script>
+<script src="webtoon.js?v=12"></script>
+<script src="wish.js?v=12"></script>
+<script src="app.js?v=12"></script>
+</body>
+</html>
