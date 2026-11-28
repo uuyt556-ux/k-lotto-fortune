@@ -706,16 +706,17 @@
           ? " 몰아 두세요. " + (strong ? "힘이 남는 구간이라 벌인 만큼 굴러갑니다." : "체력이 남는 구간이라 회복과 실행을 함께 가져가세요.")
           : " 이 달에만 크게 걸고, 나머지 달은 정산·서류·휴식으로 지키세요.");
     }
+    var evenHalf = Math.abs(a1 - a2) <= 2;
     var halves = [
-      { label: "1~6월", tone: upFirst ? "up" : "low", avg: a1, tag: upFirst ? "치고 나갈 구간" : "숨 고를 구간", text: halfText(bm1, true) },
-      { label: "7~12월", tone: upFirst ? "low" : "up", avg: a2, tag: upFirst ? "숨 고를 구간" : "치고 나갈 구간", text: halfText(bm2, false) }
+      { label: "1~6월", tone: (evenHalf || a1 < a2) ? "low" : "up", avg: a1, tag: evenHalf ? "고른 구간" : (upFirst ? "치고 나갈 구간" : "숨 고를 구간"), text: halfText(bm1, evenHalf ? true : a1 > a2) },
+      { label: "7~12월", tone: (evenHalf || a2 <= a1) ? "low" : "up", avg: a2, tag: evenHalf ? "고른 구간" : (upFirst ? "숨 고를 구간" : "치고 나갈 구간"), text: halfText(bm2, evenHalf ? false : a2 > a1) }
     ];
     var pivotLine = "가장 크게 꺾이는 달은 " + pv.m + "월(" + pv.gz + "월), " + pv.from + "점에서 " + pv.to + "점으로 " + (pv.d > 0 ? "올라" : "내려") + "갑니다. "
       + (pv.d > 0
         ? "이 달 전에 자금과 서류를 준비해 두면 흐름을 그대로 탑니다. "
         : "이 달에 걸린 큰일(계약·이사·큰 지출)은 앞이나 뒤 달로 옮기세요. ")
       + "한 해 최고점은 " + peak.m + "월 " + peak.score + "점, 최저점은 " + low.m + "월 " + low.score + "점입니다. "
-      + (Math.abs(a1 - a2) <= 2
+      + (evenHalf
         ? "상반기 " + a1 + "점·하반기 " + a2 + "점으로 두 구간이 거의 같아, 시기보다 무엇을 몰아두는지가 결과를 가릅니다. "
         : (upFirst ? "상반기 " + a1 + "점·하반기 " + a2 + "점으로 상반기에 밀고 하반기에 거두는 해입니다. " : "상반기 " + a1 + "점·하반기 " + a2 + "점으로 상반기에 준비하고 하반기에 밀어붙이는 해입니다. "))
       + (sameYearMo ? sameYearMo.m + "월(" + sameYearMo.ganzi + "월)은 세운 未가 겹치는 달이라 기운이 가장 진하게 드러나니, 큰 결정은 그 전 달에 끝내 두세요." : "");
