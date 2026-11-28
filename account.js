@@ -21,54 +21,55 @@
 
   /* ───────── 요금제 정의 (서버 상품 ID와 1:1로 맞출 것) ───────── */
   var VIP_FEATURES = [
-    "연간 회원 혜택 전체",
-    "1:1 맞춤 사주 오행 심층 리포트 (용신·희신)",
-    "특별 10조합 생성 (고정수·제외수 필터)",
+    "1년 패스 혜택 전체 (매주 복채 5조합 자동 발급)",
+    "매주 VIP 정밀 10조합 (고정수·제외수 필터)",
+    "1:1 맞춤 사주 오행 심층 리포트 (용신·희신·기신)",
     "명당 기운 길일 알림 · VIP 금박 테마"
   ];
 
   var PLANS = {
     monthly: {
-      id: "monthly", tier: "monthly", name: "월간 회원", hanja: "月",
-      price: 2900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "",
+      id: "monthly", tier: "monthly", name: "복채 패스", hanja: "月",
+      price: 6900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "",
       features: [
         "배너·보상형 광고 완전 제거",
-        "매일 사주 황금 5조합 무제한 즉시 확인",
+        "매주 토요일 추첨 대비 복채 5조합 자동 발급",
+        "회차별 보관함에서 바로 확인·저장",
         "내 번호 저장 최대 30개",
         "매주 토요일 당첨 알림 (설정)"
       ]
     },
     annual: {
-      id: "annual", tier: "annual", name: "연간 회원", hanja: "年",
-      price: 24900, unit: "원 / 년", cycle: "월 2,075원꼴 · 약 28% 할인", months: 12, autoRenew: true, badge: "인기",
+      id: "annual", tier: "annual", name: "1년 패스", hanja: "年",
+      price: 59000, unit: "원 / 년", cycle: "월 4,917원꼴 · 약 29% 할인", months: 12, autoRenew: true, badge: "인기",
       features: [
-        "월간 혜택 전체",
+        "복채 패스 혜택 전체 (매주 5조합 자동 발급)",
         "내 번호 무제한 저장",
-        "1년 대운·월별 재물운 캘린더 리포트"
+        "2027 월별 재물운 캘린더 리포트"
       ]
     },
     vip_monthly: {
-      id: "vip_monthly", tier: "vip", name: "VIP 회원", hanja: "貴",
-      price: 4900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "VIP",
+      id: "vip_monthly", tier: "vip", name: "황금 사주 패스", hanja: "貴",
+      price: 12900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "VIP",
       features: VIP_FEATURES
     },
     vip_lifetime: {
-      id: "vip_lifetime", tier: "vip", name: "VIP 평생", hanja: "永",
-      price: 49000, unit: "원 / 1회", cycle: "평생 이용 · 자동갱신 없음", months: 0, autoRenew: false, badge: "VIP",
+      id: "vip_lifetime", tier: "vip", name: "황금 사주 패스 평생", hanja: "永",
+      price: 89000, unit: "원 / 1회", cycle: "평생 이용 · 자동갱신 없음", months: 0, autoRenew: false, badge: "VIP",
       features: VIP_FEATURES.concat(["추가 결제·자동갱신 없음"])
     }
   };
 
   /* 등급별 실제 기능 권한 — 화면 잠금은 모두 이 표를 기준으로 판단합니다 */
   var FEATURES = {
-    free:    { noAds: false, goldInstant: false, saveLimit: 5, weeklyAlert: false, annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
-    monthly: { noAds: true,  goldInstant: true,  saveLimit: 30, weeklyAlert: true, annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
-    annual:  { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true, annualReport: true,  deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
-    vip:     { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true, annualReport: true,  deepReport: true,  tenCombos: true,  filters: true,  vipTheme: true,  luckyDay: true }
+    free:    { noAds: false, goldInstant: false, saveLimit: 5, weeklyAlert: false, weekly5: false, annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
+    monthly: { noAds: true,  goldInstant: true,  saveLimit: 30, weeklyAlert: true,  weekly5: true,  annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
+    annual:  { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true,  weekly5: true,  annualReport: true,  deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
+    vip:     { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true,  weekly5: true,  annualReport: true,  deepReport: true,  tenCombos: true,  filters: true,  vipTheme: true,  luckyDay: true }
   };
 
-  var TIER_NAME = { free: "무료 회원", monthly: "월간 회원", annual: "연간 회원", vip: "VIP 회원" };
-  var TIER_GATE = { noAds: "월간", goldInstant: "월간", weeklyAlert: "월간", annualReport: "연간", deepReport: "VIP", tenCombos: "VIP", filters: "VIP", luckyDay: "VIP", vipTheme: "VIP" };
+  var TIER_NAME = { free: "무료 회원", monthly: "복채 패스", annual: "1년 패스", vip: "황금 사주 패스" };
+  var TIER_GATE = { noAds: "복채 패스", goldInstant: "복채 패스", weeklyAlert: "복채 패스", weekly5: "복채 패스", annualReport: "1년 패스", deepReport: "황금 사주 패스", tenCombos: "황금 사주 패스", filters: "황금 사주 패스", luckyDay: "황금 사주 패스", vipTheme: "황금 사주 패스" };
 
   /* ───────── 저장소 ───────── */
   function load(k, d) {
@@ -305,7 +306,9 @@
     el.className = "member-bar tier-" + t;
     el.innerHTML =
       '<span class="mb-badge">' + TIER_NAME[t] + "</span>" +
-      "<span>" + (t === "vip" ? "광고 없이 10조합·심층 리포트까지 모두 열려 있습니다." : "광고 없이 오늘의 황금 5조합과 리포트가 바로 열립니다.") + "</span>";
+      "<span>" + (t === "vip"
+        ? "이번 주 복채 5조합 · 정밀 10조합 · 심층 리포트까지 모두 열려 있습니다."
+        : "광고 없이 오늘의 황금 5조합과 이번 주 복채 5조합이 열려 있습니다.") + "</span>";
   }
 
   /* ───────── 요금제 카드 ───────── */
@@ -340,18 +343,18 @@
     var isNow = tier() === "vip";
     return '<div class="plan plan-vip' + (isNow ? " now" : "") + '" data-plan="vip">' +
       '<div class="plan-top">' +
-        '<span class="plan-name"><i aria-hidden="true">' + plan.hanja + "</i>VIP 회원</span>" +
+        '<span class="plan-name"><i aria-hidden="true">' + plan.hanja + "</i>황금 사주 패스</span>" +
         '<span class="plan-badge badge-vip">VIP</span>' +
         (isNow ? '<span class="plan-now">이용 중</span>' : "") +
       "</div>" +
       '<div class="seg seg-vip" role="group" aria-label="VIP 결제 방식 선택">' +
-        '<button type="button" data-vip="vip_monthly" class="' + (vipChoice === "vip_monthly" ? "on" : "") + '">월 4,900원</button>' +
-        '<button type="button" data-vip="vip_lifetime" class="' + (vipChoice === "vip_lifetime" ? "on" : "") + '">평생 49,000원</button>' +
+        '<button type="button" data-vip="vip_monthly" class="' + (vipChoice === "vip_monthly" ? "on" : "") + '">월 12,900원</button>' +
+        '<button type="button" data-vip="vip_lifetime" class="' + (vipChoice === "vip_lifetime" ? "on" : "") + '">평생 89,000원</button>' +
       "</div>" +
       '<div class="plan-price"><b>' + won(plan.price) + '</b><small>' + plan.unit + "</small><em>" + plan.cycle + "</em></div>" +
       '<ul class="plan-feats">' + plan.features.map(function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>" +
       '<button type="button" class="btn btn-gold" data-buy="' + plan.id + '">' +
-        (isNow ? (plan.months ? "이용 중 · 기간 연장 (테스트)" : "이용 중 (평생)") : "VIP 체험 결제 (테스트)") + "</button>" +
+        (isNow ? (plan.months ? "이용 중 · 기간 연장 (테스트)" : "이용 중 (평생)") : "황금 사주 패스 체험 결제 (테스트)") + "</button>" +
       "</div>";
   }
 
@@ -409,6 +412,17 @@
       "</label>";
   }
 
+  /* 이번 주 복채 5조합 발급 상태 (app.js의 window.Weekly) */
+  function weekLine() {
+    if (!has("weekly5")) return "복채 패스부터 자동 발급";
+    var W = global.Weekly;
+    if (!W || !W.current) return "발급 준비";
+    var w = W.current();
+    if (w) return w.round + "회 · 5조합 발급 완료";
+    var info = W.info ? W.info() : null;
+    return info && info.round ? info.round + "회 · 사주 입력 후 발급" : "발급 대기";
+  }
+
   function renderMy() {
     var body = $("#myBody");
     if (!body) return;
@@ -464,12 +478,14 @@
       "</div>" +
       '<div class="kv-list">' + stateLine +
         '<div class="kv"><span>내 번호 저장</span><b>' + saved.length + " / " + (limit ? limit + "개" : "무제한") + "</b></div>" +
+        '<div class="kv"><span>이번 주 복채 5조합</span><b>' + weekLine() + "</b></div>" +
       "</div>" +
       (t === "free"
         ? '<button type="button" class="btn btn-primary" data-my="plans" style="margin:12px 0 4px">멤버십 보고 광고 없이 쓰기</button>'
         : '<button type="button" class="btn btn-ghost" data-my="plans" style="margin:12px 0 4px">요금제 변경 · 연장</button>') +
+      (has("weekly5") ? '<button type="button" class="btn btn-primary" data-my="weekly" style="margin:0 0 4px">이번 주 복채 5조합 보기</button>' : "") +
       '<div class="card-head" style="margin:16px 0 6px"><span class="hanja">告</span><h2 style="font-size:14px">알림 설정</h2><span class="rule"></span></div>' +
-      toggleRow("prefWeekly", "매주 토요일 당첨 알림", has("weeklyAlert") ? "토요일 추첨 후 내 번호 결과를 알려 드립니다 (앱 출시 후 푸시)" : "월간 회원부터 사용할 수 있습니다", !!p.weekly, !has("weeklyAlert")) +
+      toggleRow("prefWeekly", "매주 토요일 당첨 알림", has("weeklyAlert") ? "토요일 추첨 후 내 번호 결과를 알려 드립니다 (앱 출시 후 푸시)" : "복채 패스부터 사용할 수 있습니다", !!p.weekly, !has("weeklyAlert")) +
       toggleRow("prefLucky", "명당 기운 길일 알림", has("luckyDay") ? "재물운이 높은 날을 미리 알려 드립니다 (VIP)" : "VIP 회원 전용입니다", !!p.luckyDay, !has("luckyDay")) +
       (actions ? '<div class="btn-row" style="margin-top:12px">' + actions + "</div>" : "") +
       '<div class="btn-row" style="margin-top:8px">' +
@@ -488,6 +504,12 @@
         if (act === "signup") { closeModal("myModal"); openAuth("signup"); }
         else if (act === "login") { closeModal("myModal"); openAuth("login"); }
         else if (act === "plans") { closeModal("myModal"); openPlans(); }
+        else if (act === "weekly") {
+          closeModal("myModal");
+          if (global.Weekly && global.Weekly.render) global.Weekly.render();
+          var wk = document.getElementById("weekly");
+          if (wk) wk.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
         else if (act === "cancel") {
           if (!confirm("자동갱신을 해지합니다.\n지금 결제한 기간의 만료일까지는 그대로 이용할 수 있고, 다음 결제는 청구되지 않습니다. 계속할까요?")) return;
           Billing.cancel();

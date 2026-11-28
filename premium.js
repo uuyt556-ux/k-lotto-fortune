@@ -34,6 +34,11 @@
   function birthKey() { return global.Unmyeong ? global.Unmyeong.birthKey() : ""; }
 
   var TODAY_DS = dkey(TODAY);   // 앱을 연 날 기준
+  /* 이번 주 추첨 회차 기준 씨앗 — 같은 주에는 같은 10조합이 나옵니다 */
+  function seedDay() {
+    var W = global.Weekly;
+    return (W && W.roundKey) ? W.roundKey() : TODAY_DS;
+  }
   var TODAY_GZ = S.dayGanzi(TODAY);
 
   /* ───────── 오행 판정 (억부법 간이) ─────────
@@ -157,7 +162,7 @@
       if (st10.seen[n] === 999) w += 0.8;
       pool.push({ n: n, w: w, el: el });
     }
-    var rnd = mulberry32(hash(birthKey() + "|ten|" + TODAY_DS + "|" + round + "|" + fixed.join("-") + "|" + excluded.join("-")));
+    var rnd = mulberry32(hash(birthKey() + "|ten|" + seedDay() + "|" + round + "|" + fixed.join("-") + "|" + excluded.join("-")));
     var out = [], used = {};
     var need = Math.max(1, 6 - fixed.length);
 
@@ -218,9 +223,9 @@
     if (!box) return;
     tagUpdate("tenTag", "tenCombos", "VIP");
     var a = analysis();
-    if (!a) { box.innerHTML = needSaju("특별 10조합"); bindCommon(box); return; }
+    if (!a) { box.innerHTML = needSaju("이번 주 정밀 10조합"); bindCommon(box); return; }
     if (!(M && M.has("tenCombos"))) {
-      box.innerHTML = gateHtml("tenCombos", "고정수·제외수 필터로 <b>특별 10조합</b>을 만들고, 용신·희신 수리로 가중치를 줍니다.");
+      box.innerHTML = gateHtml("tenCombos", "이번 주 추첨용 <b>정밀 10조합</b>을 고정수·제외수 필터로 만들고, 용신·희신 수리로 가중치를 줍니다.");
       bindCommon(box);
       return;
     }
@@ -252,7 +257,7 @@
           '<span class="ten-why">' + whyLine(c, o) + " · 합 " + c.q.sum + " · 홀짝 " + c.q.odd + ":" + c.q.even + "</span>" +
           "</div>";
       }).join("") + "</div>" +
-      '<p class="hint">같은 날·같은 필터에는 같은 조합이 나옵니다(사주 씨앗 고정). ‘다른 10조합’을 누르면 새로 뽑습니다.</p>' +
+      '<p class="hint">같은 주·같은 필터에는 같은 조합이 나옵니다(사주·회차 씨앗 고정). ‘다른 10조합’을 누르면 새로 뽑습니다.</p>' +
       '<p class="tiny">10조합은 사주 수리·오늘 일진·최근 회차 통계를 결합한 참고용이며 당첨을 보장하지 않습니다.</p>';
 
     $("#tenApply").addEventListener("click", function () {
@@ -273,7 +278,7 @@
     $$("[data-ten-save]", box).forEach(function (btn) {
       btn.addEventListener("click", function () {
         var c = res.list[parseInt(btn.getAttribute("data-ten-save"), 10)];
-        document.dispatchEvent(new CustomEvent("unmyeong:savecombo", { detail: { nums: c.nums, title: "VIP 10조합 " + (parseInt(btn.getAttribute("data-ten-save"), 10) + 1) } }));
+        document.dispatchEvent(new CustomEvent("unmyeong:savecombo", { detail: { nums: c.nums, title: "이번 주 정밀 10조합 " + (parseInt(btn.getAttribute("data-ten-save"), 10) + 1) } }));
         btn.textContent = "저장됨";
         btn.classList.add("saved");
       });

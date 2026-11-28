@@ -6,7 +6,8 @@
     saju: "unmyeong.saju.v1",
     saved: "unmyeong.saved.v1",
     unlock: "unmyeong.unlock.v1",
-    adbar: "unmyeong.adbar.v1"
+    adbar: "unmyeong.adbar.v1",
+    weekly: "unmyeong.weekly.v1"
   };
 
   /* 데이터를 못 받아도 앱이 동작하도록 넣어 둔 최소 회차 (동행복권 실제 결과) */
@@ -246,6 +247,7 @@
         rec.combos.map(function (c, i) { return comboCard(c, i, true); }).join("");
     }
     bindSaveButtons();
+    renderWeekly();
   }
 
   function reportHtml(rec) {
@@ -307,6 +309,169 @@
         }
       });
     });
+  }
+
+
+  /* ───── 이번 주 내 복채 5조합 (복채 패스 이상 자동 발급) ───── */
+  function nextDrawDate(now) {
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var add = (6 - d.getDay() + 7) % 7;                 // 이번 주 토요일까지 남은 날
+    if (add === 0 && now.getHours() >= 20) add = 7;      // 토요일 20시 추첨 이후면 다음 주
+    d.setDate(d.getDate() + add);
+    return d;
+  }
+
+  function weekInfo() {
+    var now = new Date();
+    var target = nextDrawDate(now);
+    var latest = (state.data && state.data.draws && state.data.draws[0]) || null;
+    var round = latest ? latest.epsd : 0;
+    if (latest) {
+      var base = new Date(latest.date + "T00:00:00");
+      var weeks = Math.round((target.getTime() - base.getTime()) / 604800000);
+      round = latest.epsd + Math.max(1, weeks);
+    }
+    var midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var dday = Math.round((target.getTime() - midnight.getTime()) / 86400000);
+    return { round: round, date: target, key: todayKey(target), dday: dday, latest: latest };
+  }
+
+  function weekOwner() {
+    var M = window.Membership;
+    var u = M && M.user ? M.user() : null;
+    return u && u.email ? u.email : "guest";
+  }
+
+  /* 회차별로 한 번 만든 조합을 그대로 보관합니다 (같은 주에는 같은 조합 · 사주를 바꾸면 새로 발급) */
+  function weekRecord() {
+    if (!state.birth || !state.analysis) return null;
+    var info = weekInfo();
+    if (!info.round) return null;
+    var bag = load(LS.weekly, {}) || {};
+    var ownerBag = bag[weekOwner()] || {};
+    var rec = ownerBag[info.round];
+    if (rec && rec.birthKey === state.birth.key && rec.combos && rec.combos.length === 5) return rec;
+
+    var seedDate = new Date(info.date.getTime());
+    seedDate.setHours(12, 0, 0, 0);
+    var gen = Saju.recommend(state.analysis, state.birth.key, seedDate, (state.data && state.data.draws) || []);
+    rec = {
+      round: info.round,
+      date: info.key,
+      birthKey: state.birth.key,
+      combos: gen.combos.slice(0, 5).map(function (c) {
+        return { id: c.id, title: c.title, nums: c.nums, tags: c.tags, q: c.q, desc: c.desc };
+      }),
+      issuedAt: new Date().toISOString()
+    };
+    ownerBag[info.round] = rec;
+    /* 최근 20회차만 남깁니다 */
+    Object.keys(ownerBag).map(Number).sort(function (a, b) { return b - a; })
+      .slice(20).forEach(function (r) { delete ownerBag[r]; });
+    bag[weekOwner()] = ownerBag;
+    store(LS.weekly, bag);
+    return rec;
+  }
+
+  function weekCard(combo, i) {
+    var q = combo.q || Saju.quality(combo.nums);
+    var reasons = Saju.reasonLines(combo, state.analysis);
+    return '<div class="combo gold week-combo">' +
+      '<div class="combo-head">' +
+        '<span class="idx">' + (i + 1) + "호</span>" +
+        '<span class="name">' + combo.title + "</span>" +
+        '<span class="save"><button type="button" class="icon-btn" data-week="' + i + '">저장</button></span>' +
+      "</div>" +
+      '<div class="balls">' + balls(combo.nums) + "</div>" +
+      '<div class="combo-meta"><span>합계 <b>' + q.sum + "</b></span><span>홀:짝 <b>" + q.odd + ":" + q.even + "</b></span><span>구간 <b>" + q.bands + "/5</b></span></div>" +
+      '<details class="why"><summary>왜 이 번호일까?</summary><ul>' +
+        reasons.map(function (r) { return "<li><b>" + pad(r.n) + "</b> — " + r.text + "</li>"; }).join("") +
+      "</ul><p class='hint' style='margin-top:6px'>" + (combo.desc || "") + "</p></details>" +
+      "</div>";
+  }
+
+  function bindWeek(root) {
+    $$("[data-week]", root).forEach(function (btn) {
+      if (btn._weekBound) return;
+      btn._weekBound = true;
+      btn.addEventListener("click", function () {
+        var rec = weekRecord();
+        if (!rec) return;
+        var i = parseInt(btn.getAttribute("data-week"), 10);
+        var c = rec.combos[i];
+        if (c && saveCombo({ nums: c.nums.slice(), title: "이번 주 복채 " + (i + 1) + "호" })) {
+          btn.classList.add("saved");
+          btn.textContent = "저장됨";
+        }
+      });
+    });
+    var toSaju = $("[data-week-saju]", root);
+    if (toSaju) toSaju.addEventListener("click", function () {
+      var el = $("#saju");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    var toTen = $("[data-week-ten]", root);
+    if (toTen) toTen.addEventListener("click", function () {
+      var el = $("#tencombos");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function renderWeekly() {
+    var body = $("#weeklyBody");
+    if (!body) return;
+    var M = window.Membership;
+    var paid = !!(M && M.has("weekly5"));
+    var t = M ? M.tier() : "free";
+    var info = weekInfo();
+    var tag = $("#weeklyRound");
+    if (tag) tag.textContent = paid ? (info.round ? info.round + "회" : "이번 주") : "복채 패스";
+
+    if (!paid) {
+      body.innerHTML =
+        '<div class="lock-soft">' +
+          '<div class="lock-ico" aria-hidden="true">🧧</div>' +
+          "<h3>복채 패스 회원 전용</h3>" +
+          "<p>월 6,900원 <b>복채 패스</b>부터 매주 토요일 추첨 회차 기준 <b>복채 5조합</b>이 자동으로 발급됩니다. 회차별 보관함에 그대로 남아 다음 주에도 다시 열어 볼 수 있습니다.</p>" +
+          '<div class="ghost-row">' + new Array(7).join('<span class="ball small ghost">?</span>') + "</div>" +
+          '<button type="button" class="btn btn-gold" data-open-plans style="margin-top:12px">복채 패스 보고 열기</button>' +
+          '<p class="tiny">베타 테스트 모드에서는 ‘체험 결제’를 누르면 바로 발급됩니다. 실제 청구는 없습니다.</p>' +
+        "</div>";
+      return;
+    }
+
+    if (!state.birth) {
+      body.innerHTML =
+        '<div class="lock-soft">' +
+          '<div class="lock-ico" aria-hidden="true">🀄</div>' +
+          "<h3>사주를 먼저 입력해 주세요</h3>" +
+          "<p>생년월일을 넣으면 이번 주 " + (info.round ? info.round + "회" : "") + " 추첨용 복채 5조합을 내 사주·오행으로 만들어 드립니다.</p>" +
+          '<button type="button" class="btn btn-ghost" data-week-saju>내 사주 입력하러 가기</button>' +
+        "</div>";
+      bindWeek(body);
+      return;
+    }
+
+    var rec = weekRecord();
+    if (!rec) { body.innerHTML = '<div class="empty">이번 주 조합을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.</div>'; return; }
+
+    var when = info.date.getFullYear() + ". " + (info.date.getMonth() + 1) + ". " + info.date.getDate() + ". 토요일 추첨";
+    var dd = info.dday <= 0 ? "오늘 추첨" : "D-" + info.dday;
+    var issued = new Date(rec.issuedAt);
+    var issuedTxt = issued.getFullYear() + ". " + pad(issued.getMonth() + 1) + ". " + pad(issued.getDate()) + " 발급";
+
+    body.innerHTML =
+      '<div class="week-top">' +
+        '<div class="week-round"><b>' + rec.round + "회</b><span>" + when + " · " + dd + "</span></div>" +
+        '<span class="week-badge">매주 자동 발급</span>' +
+      "</div>" +
+      '<p class="hint" style="margin:0 0 10px">내 사주·오행과 최근 회차 통계로 <b>이번 회차용</b>으로 만든 복채 5조합입니다. 회차마다 고정 보관되어 다시 열어도 같은 조합이 나옵니다.</p>' +
+      '<div class="week-list">' + rec.combos.map(function (c, i) { return weekCard(c, i); }).join("") + "</div>" +
+      '<p class="week-note">' + issuedTxt + " · 저장한 조합은 추첨 후 자동으로 대조합니다. 당첨을 보장하지 않습니다.</p>" +
+      (t === "vip"
+        ? '<div class="week-vip"><b>황금 사주 패스</b>는 이번 주 <b>정밀 10조합</b>(고정수·제외수 필터)도 매주 열립니다.<button type="button" class="btn btn-ghost" data-week-ten>이번 주 정밀 10조합 보기</button></div>'
+        : "");
+    bindWeek(body);
   }
 
   /* ───── 최신 회차 ───── */
@@ -532,6 +697,7 @@
     /* 하단 내비 현재 위치 표시 */
     var sectionMap = {
       today: "today", saju: "saju", numbers: "numbers", saved: "saved",
+      weekly: "numbers", wish: "numbers",
       tencombos: "membership", deep: "membership", calendar: "membership", lucky: "membership", membership: "membership"
     };
     var links = $$(".nav a");
@@ -580,6 +746,7 @@
   document.addEventListener("unmyeong:tier", function () {
     renderTierUI();
     renderNumbers();
+    renderWeekly();
     renderSaved();
     if (window.Premium) window.Premium.render();
   });
@@ -596,6 +763,14 @@
     birthKey: function () { return state.birth ? state.birth.key : ""; },
     birth: function () { return state.birth; },
     fortune: function () { return state.f || null; }
+  };
+
+  /* 다른 스크립트(VIP 10조합 등)가 이번 주 회차를 같은 씨앗으로 쓸 수 있게 노출 */
+  window.Weekly = {
+    info: function () { var i = weekInfo(); return { round: i.round, date: i.key, dday: i.dday }; },
+    roundKey: function () { return weekInfo().key; },
+    current: function () { return (window.Membership && window.Membership.has("weekly5")) ? weekRecord() : null; },
+    render: renderWeekly
   };
 
   document.addEventListener("DOMContentLoaded", function () {
