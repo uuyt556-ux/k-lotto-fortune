@@ -10,5 +10,22 @@
 </head>
 <body>
 <iframe id="app" src="./index.html?v=21#numbers" title="복채로또 모바일 캡처"></iframe>
+<script>
+  (function () {
+    var f = document.getElementById("app");
+    var y = 0;
+    try { y = parseInt(new URLSearchParams(location.search).get("y") || "0", 10) || 0; } catch (e) { y = 0; }
+    f.addEventListener("load", function () {
+      try {
+        var d = f.contentDocument, w = f.contentWindow;
+        var sp = d.getElementById("splash");
+        if (sp) sp.click();
+        var tab = d.querySelector('[data-tab="buydays"]');
+        if (tab) tab.click();
+        setTimeout(function () { w.scrollTo(0, y); }, 400);
+      } catch (e) { /* 캡처용 */ }
+    });
+  })();
+</script>
 </body>
 </html>
