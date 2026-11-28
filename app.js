@@ -426,7 +426,7 @@
     var t = M ? M.tier() : "free";
     var info = weekInfo();
     var tag = $("#weeklyRound");
-    if (tag) tag.textContent = paid ? (info.round ? info.round + "회" : "이번 주") : "복채 패스";
+    if (tag) tag.textContent = paid ? ((M && M.TIER_NAME && M.TIER_NAME[t]) || "복채 패스") : "복채 패스";
 
     if (!paid) {
       body.innerHTML =
