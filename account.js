@@ -33,6 +33,8 @@
       price: 6900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "",
       features: [
         "배너·보상형 광고 완전 제거",
+        "2027 신년 총운세 · 금전·사업·건강·연애 4운",
+        "주의할 달 이유·처방 + 길한 달 전체 공개",
         "매주 토요일 추첨 대비 복채 5조합 자동 발급",
         "회차별 보관함에서 바로 확인·저장",
         "내 번호 저장 최대 30개",
@@ -44,6 +46,7 @@
       price: 59000, unit: "원 / 년", cycle: "월 4,917원꼴 · 약 29% 할인", months: 12, autoRenew: true, badge: "인기",
       features: [
         "복채 패스 혜택 전체 (매주 5조합 자동 발급)",
+        "2027 신년 총운세 12개월 전체 풀이",
         "내 번호 무제한 저장",
         "2027 월별 재물운 캘린더 리포트"
       ]
@@ -62,14 +65,14 @@
 
   /* 등급별 실제 기능 권한 — 화면 잠금은 모두 이 표를 기준으로 판단합니다 */
   var FEATURES = {
-    free:    { noAds: false, goldInstant: false, saveLimit: 5, weeklyAlert: false, weekly5: false, annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
-    monthly: { noAds: true,  goldInstant: true,  saveLimit: 30, weeklyAlert: true,  weekly5: true,  annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
-    annual:  { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true,  weekly5: true,  annualReport: true,  deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false },
-    vip:     { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true,  weekly5: true,  annualReport: true,  deepReport: true,  tenCombos: true,  filters: true,  vipTheme: true,  luckyDay: true }
+    free:    { noAds: false, goldInstant: false, saveLimit: 5, weeklyAlert: false, weekly5: false, annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false, newYear: false },
+    monthly: { noAds: true,  goldInstant: true,  saveLimit: 30, weeklyAlert: true,  weekly5: true,  annualReport: false, deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false, newYear: true },
+    annual:  { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true,  weekly5: true,  annualReport: true,  deepReport: false, tenCombos: false, filters: false, vipTheme: false, luckyDay: false, newYear: true },
+    vip:     { noAds: true,  goldInstant: true,  saveLimit: 0,  weeklyAlert: true,  weekly5: true,  annualReport: true,  deepReport: true,  tenCombos: true,  filters: true,  vipTheme: true,  luckyDay: true,  newYear: true }
   };
 
   var TIER_NAME = { free: "무료 회원", monthly: "복채 패스", annual: "1년 패스", vip: "황금 사주 패스" };
-  var TIER_GATE = { noAds: "복채 패스", goldInstant: "복채 패스", weeklyAlert: "복채 패스", weekly5: "복채 패스", annualReport: "1년 패스", deepReport: "황금 사주 패스", tenCombos: "황금 사주 패스", filters: "황금 사주 패스", luckyDay: "황금 사주 패스", vipTheme: "황금 사주 패스" };
+  var TIER_GATE = { noAds: "복채 패스", goldInstant: "복채 패스", weeklyAlert: "복채 패스", weekly5: "복채 패스", newYear: "복채 패스", annualReport: "1년 패스", deepReport: "황금 사주 패스", tenCombos: "황금 사주 패스", filters: "황금 사주 패스", luckyDay: "황금 사주 패스", vipTheme: "황금 사주 패스" };
 
   /* ───────── 저장소 ───────── */
   function load(k, d) {

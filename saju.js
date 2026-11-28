@@ -480,8 +480,498 @@
     return { rank: 0, label: "낙첨", prize: 0, hit: hit };
   }
 
+  /* ═════════ 2027 세운(丁未) 총운세 · 분야별 운 · 주의할 달 ═════════
+     일간·오행 분포·억부(용신/희신/기신)·일지 충합을 세운과 월지에 대조해
+     사람마다 다른 풀이가 나오도록 계산합니다. */
+  var GEN_BY = { 화: "목", 토: "화", 금: "토", 수: "금", 목: "수" };  // 나를 생하는(인성)
+  var CON_BY = { 토: "목", 수: "토", 화: "수", 금: "화", 목: "금" };  // 나를 극하는(관성)
+  var CHONG = [6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5];   // 자축인묘진사오미신유술해 → 충
+  var HE6 = [1, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2];    // 육합(子丑·寅亥·卯戌·辰酉·巳申·午未)
+
+  function relTo(me, el) {
+    if (el === me) return "same";
+    if (GEN[me] === el) return "gives";
+    if (GEN[el] === me) return "receives";
+    if (CON[me] === el) return "controls";
+    if (CON[el] === me) return "controlled";
+    return "neutral";
+  }
+  function roleOf(me, el) {
+    if (el === me) return "비겁";
+    if (GEN[me] === el) return "식상";
+    if (CON[me] === el) return "재성";
+    if (CON_BY[me] === el) return "관성";
+    return "인성";
+  }
+  function clampNum(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  /* 억부법 간이 판정 — 신강/신약 → 용신·희신·기신 */
+  function ohaeng(a) {
+    var me = a.dayEl, c = a.counts, total = a.total || 6;
+    var support = c[me] + c[GEN_BY[me]];
+    var strong = support * 2 > total;
+    var useful, oppose;
+    if (strong) {
+      useful = [GEN[me], CON[me], CON_BY[me]];
+      oppose = [GEN_BY[me], me];
+    } else {
+      useful = [GEN_BY[me], me];
+      oppose = [GEN[me], CON[me], CON_BY[me]];
+    }
+    var byCount = function (arr) {
+      return arr.slice().sort(function (x, y) { return c[x] - c[y] || arr.indexOf(x) - arr.indexOf(y); });
+    };
+    var u = byCount(useful), op = byCount(oppose);
+    return {
+      me: me, strong: strong, support: support, total: total,
+      yong: u[0], hee: u[1] || u[0], gi: op[op.length - 1], counts: c
+    };
+  }
+
+  function yearGanzi(y) {
+    var st = ((y - 4) % 10 + 10) % 10, br = ((y - 4) % 12 + 12) % 12;
+    return {
+      year: y, stem: st, branch: br,
+      name: STEMS[st] + BRANCHES[br], hanja: STEMS_H[st] + BRANCHES_H[br],
+      stemEl: STEM_EL[st], branchEl: BRANCH_EL[br]
+    };
+  }
+
+  var BODY_PART = {
+    목: "간·담·눈과 힘줄", 화: "심장·혈압·수면", 토: "위·소화·체중", 금: "폐·기관지·피부", 수: "신장·방광·허리"
+  };
+  var BODY_TIP = {
+    목: "눈을 자주 쉬게 하고 스트레칭으로 옆구리를 펴 주세요.",
+    화: "카페인과 늦은 술을 줄이고 잠드는 시간을 고정하세요.",
+    토: "저녁은 가볍게, 식사 시간은 일정하게 두세요.",
+    금: "환기를 자주 하고, 목이 칼칼하면 바로 물을 마시세요.",
+    수: "물을 챙겨 마시고 허리와 무릎을 차게 두지 마세요."
+  };
+  var ROLE_MONTH = { 비겁: "경쟁·지출", 식상: "표현·새 일", 재성: "재물", 관성: "계약·책임", 인성: "문서·준비" };
+  var ROLE_USE = {
+    비겁: "모임·동업 논의를", 식상: "홍보·출시·새 채널을", 재성: "정산·계약·가격 조정을",
+    관성: "지원·심사·면접을", 인성: "공부·자격·서류 정리를"
+  };
+  var YEAR_ROLE_LINE = {
+    목: "두 기운이 모두 내 손에서 나가는 자리(식상·재성)에 놓입니다. 만들고 알리고 파는 일이 그대로 재물이 되는 해입니다.",
+    화: "불이 겹치고 흙이 따라오는 해입니다(비겁·식상). 내 기운이 두 배가 되는 만큼 나눠 줄 자리도 넓어집니다.",
+    토: "불이 나를 살리고 흙이 나를 보태는 해입니다(인성·비겁). 버티던 일이 뿌리를 내리고 사람이 남습니다.",
+    금: "불이 나를 단련하고 흙이 나를 감싸는 해입니다(관성·인성). 맡은 자리가 무거워지는 대신 실력이 값이 됩니다.",
+    수: "불이 재물이 되고 흙이 책임이 되는 해입니다(재성·관성). 돈이 보이는 만큼 책임도 함께 따라옵니다."
+  };
+  var KEYWORDS = {
+    목: { strong: ["말과 실행", "현금 흐름", "새 채널"], weak: ["속도 조절", "체력 관리", "기반 정비"] },
+    화: { strong: ["주도권", "사람과 협업", "새 수입원"], weak: ["분산", "동업 주의", "안쪽 정비"] },
+    토: { strong: ["공부·자격", "사람 관리", "고집 주의"], weak: ["회복", "후원", "뿌리내리기"] },
+    금: { strong: ["계약·직책", "자격", "책임"], weak: ["버티기", "문서·자격", "건강"] },
+    수: { strong: ["재물 기회", "계약", "확장"], weak: ["지출 통제", "무리 금지", "몸 챙기기"] }
+  };
+  var GI_KEY = { 목: "지출 통제", 화: "말 아끼기", 토: "결정 미루기", 금: "관계 정리", 수: "통장 나누기" };
+
+  function gradeOf(score) {
+    if (score >= 86) return { t: "크게 트이는 해", d: "밀어 둔 일이 결과로 굳는 흐름" };
+    if (score >= 76) return { t: "밀면 열리는 해", d: "준비한 만큼 돌아오는 흐름" };
+    if (score >= 66) return { t: "고르게 가는 해", d: "크게 벌이지 않으면 크게 잃지도 않는 흐름" };
+    return { t: "속도를 줄여야 하는 해", d: "지키는 쪽이 이기는 흐름" };
+  }
+
+  function elementRx(el) {
+    if (el === "화") return "열이 오르는 달이라 카페인·야식·늦은 술을 줄이세요.";
+    if (el === "토") return "소화가 무거워지는 달이라 저녁은 가볍게, 야식은 끊으세요.";
+    if (el === "수") return "수(水)가 모자라는 달이라 물·국물을 챙기고 밤 시간을 아끼세요.";
+    if (el === "목") return "목(木)이 약해지는 달이라 눈과 목을 자주 쉬게 하세요.";
+    return "금(金)이 약해지는 달이라 환기와 목 관리에 신경 쓰세요.";
+  }
+
+  /* ── 한 해 총운세 ── */
+  function annual(s, gender, year) {
+    year = year || 2027;
+    var a = analyze(s);
+    var o = ohaeng(a);
+    var yg = yearGanzi(year);
+    var me = a.dayEl;
+    var H = ELEM_H;
+    var dayBr = s.pillars[1].branch;
+    var monBr = s.pillars[2].branch;
+    var dayBrName = BRANCHES[dayBr] + "(" + BRANCHES_H[dayBr] + ")";
+    var monBrName = BRANCHES[monBr] + "(" + BRANCHES_H[monBr] + ")";
+    var dayClash = CHONG[dayBr] === yg.branch;
+    var harmony = HE6[dayBr] === yg.branch;
+    var monthClash = CHONG[monBr] === yg.branch;
+    var roles = { stem: roleOf(me, yg.stemEl), branch: roleOf(me, yg.branchEl) };
+
+    function elBonus(el, w) {
+      var b = 0;
+      if (el === o.yong) b += 13 * w;
+      else if (el === o.hee) b += 7 * w;
+      else if (el === o.gi) b -= 10 * w;
+      if (a.lacking.indexOf(el) >= 0) b += 6 * w;
+      if (a.strongest.indexOf(el) >= 0 && a.counts[el] >= 3) b -= 6 * w;
+      return b;
+    }
+    var score = 78 + elBonus(yg.stemEl, 0.55) + elBonus(yg.branchEl, 1);
+    if (dayClash) score -= 7;
+    if (harmony) score += 6;
+    score = Math.round(clampNum(score, 45, 95));
+
+    var kw = (KEYWORDS[me][o.strong ? "strong" : "weak"] || []).slice();
+    if (yg.stemEl === o.gi || yg.branchEl === o.gi) kw[2] = GI_KEY[me];
+
+    var ctx = {
+      a: a, o: o, me: me, yg: yg, gender: gender || "male",
+      roles: roles, dayClash: dayClash, harmony: harmony, monthClash: monthClash,
+      dayIdx: dayBr, monIdx: monBr,
+      dayBrName: dayBrName, monBrName: monBrName, elBonus: elBonus
+    };
+
+    var yearLine = YEAR_ROLE_LINE[me];
+    if (yg.stemEl === o.gi || yg.branchEl === o.gi) {
+      yearLine += " 다만 그 기운이 내 사주에는 버거운 쪽(기신)이라, 벌인 만큼 거두는 절차가 필요합니다.";
+    } else if (yg.stemEl === o.yong || yg.branchEl === o.yong || yg.stemEl === o.hee || yg.branchEl === o.hee) {
+      yearLine += " 게다가 그 기운이 내 용신·희신과 맞아, 올해 벌인 일이 오래 남습니다.";
+    }
+
+    var summary = {
+      year: yearLine,
+      strength: (o.strong
+        ? "받쳐 주는 힘이 " + o.support + "/" + o.total + "자로 두터운 편입니다. 2027년에는 이 힘을 밖으로 흘려보내야 재물과 성과로 남습니다. 안으로 움켜쥐면 고집만 커집니다."
+        : "받쳐 주는 힘이 " + o.support + "/" + o.total + "자로 얇은 편입니다. 2027년의 화·토는 나를 쓰게 만드는 기운이라, 벌이는 것보다 회복의 리듬이 한 해의 성과를 가릅니다."),
+      yong: "용신 " + H[o.yong] + "(" + o.yong + ")·희신 " + H[o.hee] + "(" + o.hee + ")을 살리는 선택이 이 해의 요령입니다. 색은 " + ELEM_COLORNAME[o.yong] + ", 방위는 " + ELEM_DIR[o.yong] + ", 시간은 " + ELEM_TIME[o.yong] + "입니다."
+    };
+
+    var domains = [domainMoney(ctx), domainWork(ctx), domainHealth(ctx), domainLove(ctx)];
+    var months = monthList(ctx);
+    var caution = [], good = [];
+    var asc = months.slice().sort(function (x, y) { return x.score - y.score || x.m - y.m; });
+    var desc = months.slice().sort(function (x, y) { return y.score - x.score || x.m - y.m; });
+    asc.forEach(function (mo) { if (caution.length < 3 && mo.score <= 60) caution.push(mo); });
+    if (caution.length < 2) {
+      asc.forEach(function (mo) { if (caution.length < 2 && caution.indexOf(mo) < 0) caution.push(mo); });
+    }
+    caution.sort(function (x, y) { return x.score - y.score; });
+    desc.forEach(function (mo) { if (good.length < 2 && caution.indexOf(mo) < 0 && mo.score >= 66) good.push(mo); });
+    if (!good.length) desc.forEach(function (mo) { if (good.length < 2 && caution.indexOf(mo) < 0) good.push(mo); });
+    good.sort(function (x, y) { return y.score - x.score; });
+
+    caution.forEach(function (mo, i) { cautionFacts(ctx, mo, i); });
+    good.forEach(function (mo) { goodFacts(ctx, mo); });
+    for (var i = 0; i < caution.length; i++) {
+      for (var j = i + 1; j < caution.length; j++) {
+        if (Math.abs(caution[i].m - caution[j].m) === 1) {
+          var pair = caution[i].m + "월과 " + caution[j].m + "월이 연달아 흔들립니다. 이 두 달에 걸친 큰일(계약·이사·수술·큰 지출)은 앞뒤 달로 옮기는 편이 안전합니다.";
+          caution[i].pair = pair;
+          caution[j].pair = pair;
+        }
+      }
+    }
+
+    return {
+      year: year, yg: yg, me: me, meName: a.dayStemName, meH: H[me],
+      strong: o.strong, support: o.support, total: o.total,
+      yong: o.yong, hee: o.hee, gi: o.gi,
+      score: score, grade: gradeOf(score), keywords: kw,
+      summary: summary, domains: domains, months: months,
+      caution: caution, good: good,
+      dayClash: dayClash, harmony: harmony, monthClash: monthClash,
+      dayBrName: dayBrName, monBrName: monBrName, roles: roles
+    };
+  }
+
+  /* ── 분야별 ── */
+  function toneOf(score) { return score >= 76 ? "hot" : score >= 62 ? "mid" : "low"; }
+
+  function domainMoney(c) {
+    var a = c.a, o = c.o, me = c.me, H = ELEM_H;
+    var jaeEl = CON[me];
+    var jaeGi = jaeEl === o.gi, jaeYong = jaeEl === o.yong || jaeEl === o.hee;
+    var hasJae = c.roles.stem === "재성" || c.roles.branch === "재성";
+    var jH = H[jaeEl];
+    var s = 64;
+    if (hasJae) s += 8;
+    if (jaeYong) s += 10; else if (jaeGi) s -= 12;
+    if (o.strong && hasJae) s += 5;
+    if (!o.strong && hasJae) s -= 4;
+    if (c.dayClash) s -= 6;
+    if (c.harmony) s += 3;
+    s = Math.round(clampNum(s, 41, 96));
+
+    var lead, lines = [], tip;
+    if (hasJae && !jaeGi) {
+      lead = o.strong
+        ? "2027년은 재물을 직접 쥐는 해입니다. 쥔 손을 벌리지만 않으면 통장이 두꺼워집니다."
+        : "돈이 들어오는 문은 열리지만 그 무게가 나를 누릅니다. 버는 순서보다 지키는 순서가 중요한 해입니다.";
+    } else if (hasJae && jaeGi) {
+      lead = "재물의 문이 열리지만 그 기운이 내 사주엔 부담(기신)입니다. 들어온 돈이 그대로 나가기 쉬운 해입니다.";
+    } else {
+      lead = "2027년은 큰 재물이 한꺼번에 들어오는 해는 아닙니다. 대신 새는 구멍을 막기에 가장 좋은 해입니다.";
+    }
+    lines.push("내 사주에서 재물은 나(" + H[me] + ")가 누르는 " + jH + "(" + jaeEl + ") 기운입니다. "
+      + (hasJae
+        ? "정미년에 그 " + jH + "가 " + (c.roles.stem === "재성" && c.roles.branch === "재성" ? "천간과 지지 양쪽에서" : c.roles.stem === "재성" ? "천간(丁)에서" : "지지(未)에서") + " 들어옵니다."
+        : "정미년에는 그 " + jH + "가 세운에 직접 오지 않아, 스스로 만든 구조에서 돈이 납니다."));
+    lines.push(c.dayClash
+      ? "일지 " + c.dayBrName + "가 세운과 충(沖)이라 계약서·보증·공동명의에 흠이 생기기 쉽습니다. 종이에 남지 않은 약속은 올해 돈이 되지 않습니다."
+      : (o.strong
+        ? "힘이 넘치는 해라 벌이는대로 쓸 수 있지만, 고정비가 같이 올라가는 것을 조심하세요. 매출이 늘면 지출도 같이 늡니다."
+        : "들어오는 돈보다 나가는 돈의 속도가 빠른 해입니다. 통장을 생활비·사업비·비상금으로 나눠 두면 흐름이 보입니다."));
+    tip = jaeGi
+      ? "수익금의 30%는 손대지 않는 계좌로 먼저 옮기세요. 남은 돈으로만 판단하면 됩니다."
+      : (o.strong
+        ? "큰 지출은 용신 " + H[o.yong] + "의 날(끝수 " + ELEM_NUMS[o.yong].slice(0, 3).join("·") + ")로 미루고, 결제 전 하루를 두세요."
+        : "자동결제·구독을 이번 주에 전부 목록으로 만들고, 쓰지 않는 것은 오늘 해지하세요.");
+
+    return { key: "money", icon: "💰", title: "금전운", score: s, tone: toneOf(s), lead: lead, lines: lines, tip: tip };
+  }
+
+  function domainWork(c) {
+    var a = c.a, o = c.o, me = c.me, H = ELEM_H;
+    var gwanRole = "관성", sikRole = "식상", inRole = "인성";
+    var hasGwan = c.roles.stem === gwanRole || c.roles.branch === gwanRole;
+    var hasSik = c.roles.stem === sikRole || c.roles.branch === sikRole;
+    var hasIn = c.roles.stem === inRole || c.roles.branch === inRole;
+    var gwanEl = CON_BY[me];
+    var s = 62;
+    if (hasGwan) s += 6;
+    if (hasSik) s += 8;
+    if (hasIn) s += 3;
+    if (gwanEl === o.gi) s -= 8; else if (gwanEl === o.yong || gwanEl === o.hee) s += 6;
+    if (o.strong) s += 4; else s -= 2;
+    if (c.dayClash) s -= 5;
+    if (c.monthClash) s -= 3;
+    s = Math.round(clampNum(s, 41, 96));
+
+    var lead, lines = [], tip;
+    if (hasGwan && hasSik) {
+      lead = "맡는 자리와 알리는 일이 같이 오는 해입니다. 책임이 늘어난 만큼 이름이 알려집니다.";
+    } else if (hasGwan) {
+      lead = gwanEl === o.gi
+        ? "책임은 늘어나는데 힘은 그만큼 붙지 않는 해입니다. 맡는 일의 개수를 줄이는 것이 곧 성과입니다."
+        : "계약·직책·심사처럼 '정해진 자리'가 따라오는 해입니다. 실력이 값으로 매겨집니다.";
+    } else if (hasSik) {
+      lead = "새 채널·새 제안이 통하는 해입니다. 벌인 일이 매출로 이어지는 속도가 평소보다 빠릅니다.";
+    } else {
+      lead = "2027년은 새로 벌이기보다 안을 다지는 해입니다. 기존 상품·콘텐츠를 손보면 성과가 남습니다.";
+    }
+    lines.push("일(관성)은 나를 누르는 " + H[gwanEl] + "(" + gwanEl + "), 확장(식상)은 내가 낳는 " + H[GEN[me]] + "(" + GEN[me] + ") 기운입니다. "
+      + (hasGwan
+        ? "올해 그 " + H[gwanEl] + "이 들어와 " + (o.strong ? "힘으로 감당할 수 있는 범위 안에 있습니다." : "체력이 따라야 감당되는 크기입니다.")
+        : "올해 관성은 세운에 직접 오지 않습니다. " + (o.strong ? "그래서 책임보다 확장 쪽에 힘이 실립니다." : "책임은 적은 대신 체력이 성과의 한계가 됩니다.")));
+    lines.push(c.dayClash
+      ? "일지 충이 있는 해라, 사람이 바뀌거나 담당이 바뀌는 일이 생기기 쉽습니다. 인수인계 문서를 남기는 습관이 재산이 됩니다."
+      : (o.strong
+        ? "강한 기운을 밖으로 풀어야 재물이 됩니다. 말로만 하던 기획을 이 해에 실제로 내놓으세요."
+        : "혼자 다 하려는 순간 흐름이 끊깁니다. 반복 업무는 사람에게 넘기고, 나는 결정에만 힘을 쓰세요."));
+    tip = (hasGwan
+      ? "새 계약은 '해지 조건·정산일·책임 범위' 세 줄만 먼저 확인하세요. 나머지는 그 뒤에 읽어도 됩니다."
+      : "이번 해에는 새 상품 하나보다 기존 상품의 상세페이지·가격·재고를 정리하는 편이 남는 장사입니다.");
+
+    return { key: "work", icon: "💼", title: "사업·일운", score: s, tone: toneOf(s), lead: lead, lines: lines, tip: tip };
+  }
+
+  function domainHealth(c) {
+    var a = c.a, o = c.o, me = c.me, H = ELEM_H;
+    var weak = a.lacking[0];
+    var overEl = (a.counts[c.yg.branchEl] >= 3 && a.counts[c.yg.branchEl] >= a.counts[c.yg.stemEl]) ? c.yg.branchEl : (a.counts[c.yg.stemEl] >= 3 ? c.yg.stemEl : null);
+    var s = 70;
+    if (overEl) s -= 8;
+    if (a.counts[c.yg.branchEl] + a.counts[c.yg.stemEl] >= 5) s -= 5;
+    if (a.lacking.indexOf(c.yg.branchEl) >= 0 || a.lacking.indexOf(c.yg.stemEl) >= 0) s += 6;
+    if (c.yg.stemEl === o.gi || c.yg.branchEl === o.gi) s -= 6;
+    if (a.lacking.indexOf("수") >= 0) s -= 4;
+    if (a.lacking.indexOf("목") >= 0) s -= 2;
+    if (c.dayClash) s -= 4;
+    if (c.monthClash) s -= 3;
+    s = Math.round(clampNum(s, 42, 92));
+
+    var lead, lines = [], tip;
+    if (overEl) {
+      lead = H[overEl] + " 기운이 넘치는 해입니다. " + BODY_PART[overEl] + " 쪽에 먼저 신호가 옵니다.";
+    } else if (a.lacking.indexOf("수") >= 0 || a.lacking.indexOf("목") >= 0) {
+      lead = "마르는 기운이 강한 해입니다. " + BODY_PART[a.lacking[0]] + " 쪽을 먼저 챙기세요.";
+    } else {
+      lead = "큰 고비는 없지만, 쓰는 기운이 많아 피로가 쌓이는 해입니다.";
+    }
+    lines.push("사주에서 약한 " + H[weak] + "(" + weak + ")는 " + BODY_PART[weak] + " 쪽으로 나타납니다. "
+      + (a.lacking.indexOf(c.yg.branchEl) >= 0 || a.lacking.indexOf(c.yg.stemEl) >= 0
+        ? "다행히 2027년 화·토가 그 자리를 채워 주어, 올해는 컨디션의 바닥이 조금 올라옵니다."
+        : "2027년 화·토는 그 약한 자리를 더 건조하게 만듭니다. 물과 휴식이 약이 됩니다."));
+    lines.push(c.dayClash
+      ? "일지가 흔들리는 해라 잠이 얕아지고 생활 리듬이 무너지기 쉽습니다. 수면 시간을 고정하는 것이 가장 큰 보약입니다."
+      : (overEl
+        ? "넘치는 기운은 열과 긴장으로 나타납니다. 혈압·체중처럼 숫자로 보이는 것부터 관리하세요."
+        : "몸이 보내는 작은 신호(어지럼·소화·두통)를 그냥 넘기지 마세요. 2028년의 컨디션을 올해가 만듭니다."));
+    tip = BODY_TIP[weak] + (overEl && overEl !== weak ? " " + BODY_TIP[overEl] : "");
+
+    return { key: "health", icon: "🌿", title: "건강운", score: s, tone: toneOf(s), lead: lead, lines: lines, tip: tip };
+  }
+
+  function domainLove(c) {
+    var a = c.a, o = c.o, me = c.me, H = ELEM_H;
+    var spouseRole = c.gender === "female" ? "관성" : "재성";
+    var spouseEl = spouseRole === "관성" ? CON_BY[me] : CON[me];
+    var hasSpouse = c.roles.stem === spouseRole || c.roles.branch === spouseRole;
+    var s = 66;
+    if (hasSpouse) s += 7;
+    if (spouseEl === o.gi) s -= 9;
+    if (spouseEl === o.yong || spouseEl === o.hee) s += 6;
+    if (c.dayClash) s -= 11;
+    if (c.harmony) s += 8;
+    if (c.monthClash) s -= 4;
+    s = Math.round(clampNum(s, 41, 96));
+
+    var lead, lines = [], tip;
+    if (c.dayClash) {
+      lead = "배우자궁(일지 " + c.dayBrName + ")이 올해 세운과 부딪힙니다. 가까운 사이라서 말이 더 날카로워지는 해입니다.";
+    } else if (c.harmony) {
+      lead = "배우자궁에 합(合)이 들어옵니다. 막혀 있던 관계가 풀리고 새 인연이 자연스럽게 이어지는 해입니다.";
+    } else if (hasSpouse) {
+      lead = "인연의 자리가 열려 있습니다. 다만 " + (o.strong ? "내 속도에 상대를 맞추려는 마음을 내려놓아야" : "기다리기만 하지 말고 먼저 말을 걸어야") + " 관계가 자랍니다.";
+    } else {
+      lead = "2027년은 관계를 늘리기보다 '지킬 사람'을 정리하는 해입니다. 남는 인연이 오래갑니다.";
+    }
+    lines.push("내 사주에서 인연은 " + (spouseRole === "재성" ? "재성" : "관성") + "(" + H[spouseEl] + ") 자리입니다. "
+      + (hasSpouse
+        ? "정미년에 그 기운이 들어와 마음이 움직이는 일이 생깁니다."
+        : "올해는 그 기운이 직접 오지 않아, 스스로 만든 자리에서 사람이 남습니다."));
+    lines.push("가정은 월지 " + c.monBrName + " 자리로 봅니다. "
+      + (c.monthClash
+        ? "올해 그 자리가 세운과 부딪혀 가족 쪽 일정과 부담이 겹칩니다. 돈과 시간을 미리 말해 두면 싸움이 줄어듭니다."
+        : "올해 그 자리가 크게 흔들리지 않아, 가족과의 약속을 지키는 것만으로 신뢰가 쌓입니다."));
+    tip = c.dayClash
+      ? "중요한 대화는 저녁 10시 이후에 하지 마세요. 이 해의 밤 대화는 두 배로 길어집니다."
+      : (c.harmony
+        ? "미뤄 둔 연락·답장을 이번 달에 정리하세요. 합이 들어온 해의 먼저 건 네는 인사가 오래 갑니다."
+        : "가족·연인과 '한 달에 한 번은 밖에서 식사' 같은 작은 약속을 정해 두세요.");
+
+    return { key: "love", icon: "💞", title: "연애·가족운", score: s, tone: toneOf(s), lead: lead, lines: lines, tip: tip };
+  }
+
+  /* ── 12개월 흐름 ── */
+  function monthList(c) {
+    var a = c.a, o = c.o, me = c.me, yg = c.yg;
+    var out = [];
+    for (var m = 1; m <= 12; m++) {
+      var p = pillars(yg.year, m, 15, null, 0);
+      var mp = p.pillars[2];
+      var mb = BRANCH_EL[mp.branch], ms = STEM_EL[mp.stem];
+      var role = roleOf(me, mb);
+      var rel = relTo(me, mb);
+      var sc = 60 + ({ receives: 10, same: 4, controls: 5, gives: 2, controlled: -10, neutral: 0 })[rel];
+      sc += c.elBonus(mb, 1) + c.elBonus(ms, 0.5);
+      var factors = [];
+      if (mp.branch === yg.branch) { factors.push("sameYear"); sc += (mb === o.yong || mb === o.hee) ? 4 : -4; }
+      if (CHONG[mp.branch] === yg.branch) { sc -= 8; factors.push("yearClash"); }
+      if (c.dayIdx !== undefined && CHONG[mp.branch] === c.dayIdx) { sc -= 10; factors.push("dayClash"); }
+      if (c.monIdx !== undefined && CHONG[mp.branch] === c.monIdx) { sc -= 5; factors.push("monthClash"); }
+      if (c.dayIdx !== undefined && HE6[mp.branch] === c.dayIdx) { sc += 6; factors.push("harmony"); }
+      if (mb === o.gi || ms === o.gi) factors.push("gi");
+      if (a.strongest.indexOf(mb) >= 0 && a.counts[mb] >= 3) factors.push("over");
+      if (rel === "controlled") factors.push("controlled");
+      if (mb === o.yong || ms === o.yong) factors.push("yong");
+      else if (mb === o.hee || ms === o.hee) factors.push("hee");
+      if (a.lacking.indexOf(mb) >= 0) factors.push("lack");
+      out.push({
+        m: m, hanja: STEMS_H[mp.stem] + BRANCHES_H[mp.branch], ganzi: STEMS[mp.stem] + BRANCHES[mp.branch],
+        brName: BRANCHES[mp.branch] + "(" + BRANCHES_H[mp.branch] + ")",
+        mb: mb, ms: ms, role: role, rel: rel, score: Math.round(clampNum(sc, 41, 97)), factors: factors
+      });
+    }
+    return out;
+  }
+
+  /* ── 주의할 달 근거·처방 ── */
+  var RX = {
+    금전: [
+      "큰 지출·보증·공동명의는 이 달에 걸지 마세요. 결정은 다음 달 첫 주로 미룹니다.",
+      "카드 한도 알림과 자동이체 목록을 이 달 초에 한 번 정리하세요. 새는 돈의 대부분은 자동결제입니다."
+    ],
+    사업: [
+      "새 계약은 조항을 세 번 읽고 서명은 다음 달로 미루세요. 구두 약속은 그날 문자로 남깁니다.",
+      "확장 대신 기존 채널의 전환율·재구매율을 점검하는 달로 쓰세요. 매출은 그다음 달에 붙습니다."
+    ],
+    건강: [
+      "잠드는 시간을 30분 앞당기고, 물 1.5L·저녁 가볍게 — 이 세 가지만 지키세요.",
+      "무리한 운동 대신 걷기 30분. 몸이 보내는 신호(어지럼·소화·두통)를 적어 두면 다음 달이 편합니다."
+    ],
+    관계: [
+      "말 한마디를 반 박자 늦추세요. 이 달의 말은 상대에게 두 배로 남습니다.",
+      "가족·가까운 사람과의 약속은 날짜와 시간을 미리 확정하고, 돈 이야기는 이 달에 꺼내지 마세요."
+    ]
+  };
+  var HEAD = {
+    금전: ["{m}월, 돈이 새거나 계약이 틀어질 수 있는 달입니다", "{m}월, 들어오는 돈보다 나가는 돈이 빨라지는 달입니다"],
+    사업: ["{m}월, 확장보다 서류를 다시 펼쳐야 하는 달입니다", "{m}월, 맡은 일이 무거워지는 달입니다"],
+    건강: ["{m}월, 몸이 먼저 신호를 보내는 달입니다", "{m}월, 잠과 소화가 흐트러지기 쉬운 달입니다"],
+    관계: ["{m}월, 가까운 사람과 말이 어긋나기 쉬운 달입니다", "{m}월, 마음은 앞서는데 말이 늦는 달입니다"]
+  };
+
+  function monthDomain(c, mo) {
+    var f = mo.factors;
+    if (f.indexOf("yearClash") >= 0) return "금전";
+    if (f.indexOf("dayClash") >= 0) return "관계";
+    if (mo.role === "재성" && (f.indexOf("gi") >= 0 || f.indexOf("over") >= 0)) return "금전";
+    if (f.indexOf("gi") >= 0) return (mo.role === "관성" || mo.role === "비겁") ? "사업" : "건강";
+    if (f.indexOf("over") >= 0) return "건강";
+    if (f.indexOf("controlled") >= 0) return "사업";
+    if (f.indexOf("monthClash") >= 0) return "관계";
+    if (mo.role === "재성") return "금전";
+    if (mo.role === "관성") return "사업";
+    return "건강";
+  }
+
+  function factorLine(k, c, mo) {
+    var H = ELEM_H;
+    if (k === "yearClash") return "2027년 세운 미(未)와 이 달 " + mo.brName + "이 정면으로 부딪치는 충(沖)입니다. 한 해의 기둥이 흔들리는 자리라 결정이 뒤집히고, 잡아 둔 일정이 밀리기 쉽습니다.";
+    if (k === "dayClash") return "사주 일지 " + c.dayBrName + "와 이 달 " + mo.brName + "이 충(沖)을 이룹니다. 배우자궁·생활 기반이 흔들려 가까운 사람과의 말 한마디가 오래 남습니다.";
+    if (k === "monthClash") return "사주 월지 " + c.monBrName + "와 부딪칩니다. 가족·직장 쪽에서 예정에 없던 일이 생기고, 내 시간이 남에게 먼저 쓰입니다.";
+    if (k === "gi") return H[c.o.gi] + "(" + c.o.gi + ") 기운이 기신(忌神)으로 들어오는 달입니다. " + ROLE_MONTH[mo.role] + " 쪽에서 벌인 일이 부담으로 돌아오고, 몸이 쉽게 지칩니다.";
+    if (k === "over") return H[mo.mb] + "(" + mo.mb + ") 기운이 사주에 이미 " + c.a.counts[mo.mb] + "개로 넘치는 달입니다. 같은 기운이 겹치면 고집과 과속이 되어, 확인 없이 밀어붙이게 됩니다.";
+    if (k === "controlled") return H[mo.mb] + "(" + mo.mb + ") 기운이 나를 누르는 달입니다. 책임과 압박이 한꺼번에 몰리고 남의 일을 대신 떠안기 쉽습니다.";
+    if (k === "sameYear") return "세운 미(未)와 같은 글자가 겹치는 달입니다. 세운의 기운이 가장 진하게 드러나 좋고 나쁨이 크게 갈립니다.";
+    return "";
+  }
+
+  function cautionFacts(c, mo, i) {
+    var domain = monthDomain(c, mo);
+    var rank = ["yearClash", "dayClash", "gi", "over", "monthClash", "controlled", "sameYear"];
+    var lines = [];
+    rank.forEach(function (k) {
+      if (lines.length < 2 && mo.factors.indexOf(k) >= 0) {
+        var t = factorLine(k, c, mo);
+        if (t) lines.push(t);
+      }
+    });
+    if (!lines.length) lines.push(factorLine("controlled", c, mo));
+    var heads = HEAD[domain] || HEAD.건강;
+    var head = (heads[Math.min(i, heads.length - 1)] || heads[0]).replace("{m}", mo.m);
+    var rx = (RX[domain] || RX.건강).slice();
+    if (domain === "건강") rx.push(elementRx(mo.mb === c.o.gi ? c.o.gi : mo.mb));
+    mo.domain = domain;
+    mo.headline = head;
+    mo.reasons = lines;
+    mo.rx = rx.slice(0, 2);
+    mo.note = mo.ganzi + "월 · " + ROLE_MONTH[mo.role];
+    return mo;
+  }
+
+  function goodFacts(c, mo) {
+    var H = ELEM_H;
+    var why;
+    if (mo.factors.indexOf("yong") >= 0) why = "용신 " + H[c.o.yong] + "(" + c.o.yong + ")가 들어오는 달";
+    else if (mo.factors.indexOf("hee") >= 0) why = "희신 " + H[c.o.hee] + "(" + c.o.hee + ")가 힘을 보태는 달";
+    else if (mo.factors.indexOf("lack") >= 0) why = "사주에 없던 " + H[mo.mb] + "(" + mo.mb + ")가 채워지는 달";
+    else if (mo.factors.indexOf("harmony") >= 0) why = "일지와 합(合)이 들어 관계가 풀리는 달";
+    else if (mo.factors.indexOf("sameYear") >= 0) why = "세운의 기운이 그대로 서는 달";
+    else why = "기운이 고르게 도는 달";
+    mo.reason = why;
+    mo.use = ROLE_USE[mo.role] + " 이 달에 몰아 두세요.";
+    return mo;
+  }
+
   global.Saju = {
-    pillars: pillars, analyze: analyze, dayGanzi: dayGanzi, fortune: fortune,
+    pillars: pillars, analyze: analyze, dayGanzi: dayGanzi, fortune: fortune, ohaeng: ohaeng,
+    annual: annual, yearGanzi: yearGanzi, roleOf: roleOf, relTo: relTo,
+    BODY_PART: BODY_PART, ROLE_MONTH: ROLE_MONTH,
     recommend: recommend, reasonLines: reasonLines, winRank: winRank,
     ELEMS: ELEMS, ELEM_H: ELEM_H, ELEM_COLOR: ELEM_COLOR, ELEM_NUMS: ELEM_NUMS,
     STEMS: STEMS, STEMS_H: STEMS_H, BRANCHES: BRANCHES, BRANCHES_H: BRANCHES_H,

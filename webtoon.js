@@ -67,6 +67,12 @@
     if (global.Unmyeong && global.Unmyeong.fortune) return global.Unmyeong.fortune();
     return null;
   }
+  /* 2027 신년 총운세 — 웹툰 대사에서 주의할 달을 짚어 주려고 계산만 합니다 */
+  function annualBrief() {
+    var b = global.Unmyeong && global.Unmyeong.birth ? global.Unmyeong.birth() : null;
+    if (!b || !b.pillars || !S.annual) return null;
+    try { return S.annual(b.pillars, state.viewer, 2027); } catch (e) { return null; }
+  }
   function tierOf() { var m = M(); return m ? m.tier() : "free"; }
   function loggedIn() { var m = M(); return !!(m && m.user()); }
 
@@ -91,7 +97,7 @@
     var lucky = f && f.lucky && f.lucky.length ? f.lucky.join(", ") : "3, 8, 13";
     var time = f ? f.luckyTime : "09:30~13:29";
     var dir = f ? f.luckyDir : "남쪽";
-    var lack = a && a.lacking && a.lacking.length ? S.ELEM_H[a.lacking[0]] + "(" + a.lacking[0] + ")" : "木(목)";
+    var ny = a ? annualBrief() : null;
 
     if (state.viewer === "female") {
       /* ── 점집 미소년 하윤 : 여성 이용자 ── */
@@ -108,13 +114,15 @@
 
       if (tier === "vip") {
         L.push("손님은 다 열려 있어요. 10조합도, 심층 리포트도… 제가 더 보여 드릴 게 없을 정도예요.");
-        L.push({ t: "그래도 오늘 하나만 더. 행운의 시간은 " + time + ", 방위는 " + dir + ". 그때 움직이시면 기운이 두 배로 붙어요.", cta: "numbers" });
+        if (ny) L.push("2027년 정미년 총운세도 펼쳐 뒀어요. 손님이 가장 흔들리는 달은 " + ny.caution[0].m + "월, 그 달만 넘기면 나머지는 손님 편이에요.");
+        L.push({ t: "그래도 오늘 하나만 더. 행운의 시간은 " + time + ", 방위는 " + dir + ". 그때 움직이시면 기운이 두 배로 붙어요.", cta: ny ? "annual" : "numbers" });
         return L;
       }
       if (tier === "monthly" || tier === "annual") {
-        L.push("그런데… 5조합은 매일 봐도, 10조합과 1년 재물운은 아직 반쪽이에요.");
+        L.push("2027 신년 총운세는 금전·사업·건강·연애 네 갈래로 다 열려 있어요.");
+        if (ny) L.push({ t: "손님이 가장 흔들리는 달은 " + ny.caution[0].m + "월이에요. 그 달만 피해 가도 한 해가 달라져요.", cta: "annual" });
+        L.push("그런데… 5조합은 매일 봐도, 10조합과 심층 리포트는 아직 반쪽이에요.");
         L.push({ t: "황금 사주 패스로 열어 두시면 매주 정밀 10조합이랑 비밀 재물운까지 제가 챙겨 드릴게요. 월 12,900원, 아니면 평생 89,000원 한 번이면 돼요.", cta: "plans" });
-        L.push("부족한 " + lack + " 기운을 채우는 조합까지… 그건 VIP에게만 살짝 보여 드릴게요.");
         return L;
       }
       if (guest) {
@@ -123,7 +131,8 @@
         return L;
       }
       L.push("오늘 대운이 딱 열렸는데, 반쪽만 보시게요? 아니면… 제가 다 열어 드릴까요?");
-      L.push({ t: "복채 패스로 열어 두시면 광고 없이 5조합과 상세 리포트를 매일 바로 드리고, 매주 토요일 추첨용 복채 5조합도 제가 미리 만들어 두고 있어요. 월 6,900원이에요.", cta: "plans" });
+      if (ny) L.push({ t: "2027년 정미년, 손님이 가장 흔들리는 달은 " + ny.caution[0].m + "월이에요. 그 달만 넘기면 한 해가 달라져요.", cta: "annual" });
+      L.push({ t: "복채 패스로 열어 두시면 광고 없이 5조합과 상세 리포트를 매일 바로 드리고, 2027 총운세 네 갈래도 전부 열려요. 월 6,900원이에요.", cta: "plans" });
       L.push("…손님한테만 말씀드리는 건데, 연간으로 하시면 2027 신년 재물운까지 열두 달을 미리 펼쳐 드려요. 월 4,917원꼴이에요.");
       return L;
     }
@@ -142,13 +151,15 @@
 
     if (tier === "vip") {
       L.push("손님은 이미 제 단골 중의 단골이시네요. 10조합도, 심층 리포트도 다 열려 있어요.");
-      L.push({ t: "그래도 오늘 하나만 더. 행운의 시간은 " + time + ", 방위는 " + dir + ". 그 시간에 움직이시면 기운이 두 배로 붙어요.", cta: "numbers" });
+      if (ny) L.push("2027년 정미년 총운세도 다 펼쳐 뒀어요. 손님이 가장 흔들리는 달은 " + ny.caution[0].m + "월 — 그 달만 넘기면 나머지는 순해요.");
+      L.push({ t: "그래도 오늘 하나만 더. 행운의 시간은 " + time + ", 방위는 " + dir + ". 그 시간에 움직이시면 기운이 두 배로 붙어요.", cta: ny ? "annual" : "numbers" });
       return L;
     }
     if (tier === "monthly" || tier === "annual") {
-      L.push("그런데… 5조합은 매일 봐도, 10조합과 1년 재물운은 아직 반쪽이에요.");
+      L.push("2027 신년 총운세는 금전·사업·건강·연애 네 갈래로 다 열려 있어요.");
+      if (ny) L.push({ t: "손님이 가장 흔들리는 달은 " + ny.caution[0].m + "월이에요. 그 달만 피해 가도 한 해가 달라져요.", cta: "annual" });
+      L.push("그런데… 5조합은 매일 봐도, 10조합과 심층 리포트는 아직 반쪽이에요.");
       L.push({ t: "황금 사주 패스로 열어 두시면 매주 정밀 10조합이랑 비밀 재물운까지 제가 챙겨 드릴게요. 월 12,900원, 아니면 평생 89,000원 한 번이면 돼요.", cta: "plans" });
-      L.push("오늘 부족한 " + lack + " 기운까지 채워 드리는 조합… 그건 VIP에게만 살짝 보여 드릴게요.");
       return L;
     }
     if (guest) {
@@ -157,7 +168,8 @@
       return L;
     }
     L.push("이제 제 단골이 되셨네요. …그런데 오늘, 황금 5조합이 딱 열렸는데 반쪽만 보시게요? 복채 패스면 매주 추첨용 5조합도 제가 따로 뽑아 두는데.");
-    L.push({ t: "복채 패스로 열어 두시면 광고 없이 5조합과 상세 리포트를 매일 바로 드리고, 매주 추첨용 복채 5조합도 자동으로 챙겨 드려요. 월 6,900원이에요.", cta: "plans" });
+    if (ny) L.push({ t: "2027년 정미년, 손님이 가장 흔들리는 달은 " + ny.caution[0].m + "월이에요. 그 달만 넘기면 한 해가 달라져요.", cta: "annual" });
+    L.push({ t: "복채 패스로 열어 두시면 광고 없이 5조합과 상세 리포트를 매일 바로 드리고, 2027 총운세 네 갈래도 전부 열려요. 월 6,900원이에요.", cta: "plans" });
     L.push("연간으로 하시면 2027 신년 재물운까지 열두 달을 펼쳐 드려요. 월 4,917원꼴이고요. 손님한테만 먼저 귀띔해 드리는 거예요. 후훗.");
     return L;
   }
@@ -182,6 +194,11 @@
     } else if (kind === "numbers") {
       add("numbers", "오늘의 5조합 보기", "btn-gold");
       add("plans", "내 요금제 보기", "btn-ghost");
+    } else if (kind === "annual") {
+      add("annual", "2027 신년 총운세 보기", "btn-gold");
+      if (tier === "free") add("pay:monthly", "복채 패스로 전체 열기", "btn-ghost");
+      else add("plans", "내 요금제 보기", "btn-ghost");
+      note = tier === "free" ? "총운세 요약과 주의할 달 1곳은 무료로 볼 수 있어요" : "4운 전체 · 주의할 달 전체 공개 중";
     } else if (tier === "free") {
       add("pay:monthly", "복채 패스 6,900원으로 열기", "btn-gold");
       add("pay:annual", "1년 패스 59,000원 · 월 4,917원꼴", "btn-ghost");
@@ -474,6 +491,12 @@
       closeCut();
       var n = byId("numbers");
       if (n) n.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (action === "annual") {
+      closeCut();
+      var an = byId("annual");
+      if (an) an.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     if (action.indexOf("pay:") === 0) {

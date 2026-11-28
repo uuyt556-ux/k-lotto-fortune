@@ -697,7 +697,7 @@
 
     /* 하단 내비 현재 위치 표시 */
     var sectionMap = {
-      today: "today", saju: "saju", numbers: "numbers", saved: "saved",
+      today: "today", saju: "saju", annual: "saju", numbers: "numbers", saved: "saved",
       weekly: "numbers", wish: "numbers",
       tencombos: "membership", deep: "membership", calendar: "membership", lucky: "membership", membership: "membership"
     };

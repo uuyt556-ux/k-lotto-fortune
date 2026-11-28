@@ -41,32 +41,8 @@
   }
   var TODAY_GZ = S.dayGanzi(TODAY);
 
-  /* ───────── 오행 판정 (억부법 간이) ─────────
-     신강 → 식상·재성·관성 중 모자란 것부터 용신/희신, 인성·비겁이 기신
-     신약 → 인성·비겁 중 모자란 것부터 용신/희신, 식상·재성·관성이 기신 */
-  function ohaeng(a) {
-    var me = a.dayEl, c = a.counts, total = a.total || 6;
-    var support = c[me] + c[GEN_BY[me]];
-    var strong = support * 2 > total;
-    var useful, oppose;
-    if (strong) {
-      useful = [GEN[me], CON[me], CON_BY[me]];      // 식상 · 재성 · 관성
-      oppose = [GEN_BY[me], me];                     // 인성 · 비겁
-    } else {
-      useful = [GEN_BY[me], me];                     // 인성 · 비겁
-      oppose = [GEN[me], CON[me], CON_BY[me]];       // 식상 · 재성 · 관성
-    }
-    var byCount = function (arr) {
-      return arr.slice().sort(function (x, y) { return c[x] - c[y] || arr.indexOf(x) - arr.indexOf(y); });
-    };
-    var u = byCount(useful), op = byCount(oppose);
-    var yong = u[0], hee = u[1] || u[0];
-    var gi = op[op.length - 1];
-    return {
-      me: me, strong: strong, support: support, total: total,
-      yong: yong, hee: hee, gi: gi, counts: c
-    };
-  }
+  /* 오행 판정 (억부법 간이) — saju.js 계산을 그대로 씁니다 */
+  function ohaeng(a) { return S.ohaeng(a); }
 
   /* 월/일 기운이 나에게 하는 역할 */
   function relTo(myEl, el) {
@@ -466,6 +442,167 @@
     bindCommon(box);
   }
 
+  /* ───────── 5) 2027 신년 총운세 · 주의할 달 ───────── */
+  function tellerOf() {
+    var g = "male";
+    try { var raw = localStorage.getItem("unmyeong.gender.v1"); if (raw) g = JSON.parse(raw); } catch (e) {}
+    return g === "female"
+      ? { name: "하윤", role: "점집 미소년", img: "assets/teller-male.webp" }
+      : { name: "설아", role: "미녀 점술사", img: "assets/teller-female.webp" };
+  }
+  function firstSentence(s) {
+    var t = String(s || "");
+    var i = t.indexOf(". ");
+    if (i > 12 && i < 36) return t.slice(0, i + 1);
+    return t.length > 34 ? t.slice(0, 34).replace(/[,\s]+$/, "") + "…" : t;
+  }
+  function blurBlock(html, tag) {
+    return '<div class="ny-blur">' + html + '<span class="ny-blur-tag">🔒 ' + (tag || "복채 패스") + "</span></div>";
+  }
+  function toneCls(s) { return s >= 76 ? "hot" : s >= 66 ? "mid" : "low"; }
+
+  function annualDomains(A, full) {
+    return '<div class="ny-doms">' + A.domains.map(function (d) {
+      var body = full
+        ? '<div class="ny-dom-body"><p class="ny-lead">' + d.lead + "</p>" +
+            d.lines.map(function (l) { return "<p>" + l + "</p>"; }).join("") +
+            '<p class="ny-tip"><b>실천</b> ' + d.tip + "</p></div>"
+        : '<p class="ny-lead">' + firstSentence(d.lead) + "</p>" +
+            blurBlock("<p>" + d.lines[0] + "</p><p>" + d.lines[1] + '</p><p class="ny-tip"><b>실천</b> ' + d.tip + "</p>", "복채 패스에서 계속");
+      return '<div class="ny-dom ' + toneCls(d.score) + '">' +
+        '<div class="ny-dom-head"><span class="ny-ico">' + d.icon + "</span><b>" + d.title + "</b>" +
+          '<span class="ny-num">' + (full ? d.score : "?") + "</span></div>" +
+        '<div class="ny-bar"><i style="width:' + d.score + '%"></i></div>' +
+        body +
+        "</div>";
+    }).join("") + "</div>";
+  }
+
+  function annualCaution(A, full) {
+    var worst = A.caution[0];
+    var head = '<div class="ny-sec-h">⚠️ 2027년, 유독 조심해야 할 달' +
+      (full ? '<span>' + A.caution.slice().sort(function (x, y) { return x.m - y.m; }).map(function (c) { return c.m + "월"; }).join(" · ") + "</span>" : "") + "</div>";
+
+    if (!full) {
+      return head +
+        '<div class="ny-caut hero">' +
+          '<div class="ny-caut-head"><span class="ny-cm">⚠️ ' + worst.m + "월</span>" +
+            '<span class="ny-cg">' + worst.ganzi + "월 · " + worst.note.split(" · ")[1] + '</span></div>' +
+          '<p class="ny-caut-headline">2027년 ' + worst.m + "월, " + worst.headline.slice(worst.headline.indexOf(",") + 1).trim() + "</p>" +
+          '<p class="ny-tease">사주 일지와 세운을 대조했을 때, 올해 이 달이 가장 크게 흔들립니다. 이유를 알고 피해 가는 것만으로 결과가 달라집니다.</p>' +
+          blurBlock(
+            '<ul class="ny-why">' + worst.reasons.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul>" +
+            '<div class="ny-rx"><b>피하는 처방</b><ul>' + worst.rx.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></div>", "이유·처방은 복채 패스에서"
+          ) +
+        "</div>" +
+        '<div class="ny-more-locked">' +
+          '<b>나머지 주의할 달 ' + A.caution.slice(1).sort(function (x, y) { return x.m - y.m; }).map(function (c) { return c.m + "월"; }).join(" · ") + "</b>" +
+          blurBlock('<div class="ny-caut-mini">' + A.caution.slice(1).map(function (c) {
+            return '<p><b>' + c.m + "월</b> " + c.headline + "</p>";
+          }).join("") + "</div>", "나머지 주의할 달 열기") +
+        "</div>";
+    }
+
+    return head +
+      '<div class="ny-caut-list">' + A.caution.map(function (c, i) {
+        return '<div class="ny-caut">' +
+          '<div class="ny-caut-head"><span class="ny-cm">' + (i === 0 ? "⚠️ " : "") + c.m + "월</span>" +
+            '<span class="ny-cg">' + c.ganzi + "월 · " + c.note.split(" · ")[1] + '</span>' +
+            '<span class="ny-cs">' + c.score + "</span></div>" +
+          '<p class="ny-caut-headline">' + c.headline + "</p>" +
+          '<ul class="ny-why">' + c.reasons.map(function (r) { return "<li>" + r + "</li>"; }).join("") +
+            (c.pair ? '<li class="ny-pair">' + c.pair + "</li>" : "") + "</ul>" +
+          '<div class="ny-rx"><b>피하는 처방</b><ul>' + c.rx.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></div>" +
+          "</div>";
+      }).join("") + "</div>";
+  }
+
+  function annualGood(A, full) {
+    var inner = '<div class="ny-good">' + A.good.map(function (g) {
+      return '<div class="ny-good-it"><span class="ny-gm">' + g.m + "월</span>" +
+        '<b>' + g.reason + "</b><p>" + g.use + "</p>" +
+        '<span class="ny-gs">' + g.score + "</span></div>";
+    }).join("") + "</div>";
+    return '<div class="ny-sec-h">🍀 기운이 좋은 달</div>' + (full ? inner : blurBlock(inner, "길한 달 2곳 열기"));
+  }
+
+  function annualGrid(A) {
+    return '<div class="ny-sec-h">2027년 12개월 기운 지도<span>진한 색일수록 힘이 붙는 달</span></div>' +
+      '<div class="ny-grid">' + A.months.map(function (m) {
+        return '<div class="ny-cell ' + toneCls(m.score) + '"><b>' + m.m + "</b><span>" + m.score + "</span></div>";
+      }).join("") + "</div>" +
+      '<p class="hint" style="margin-top:8px">1월은 소한·입춘 절기 기준 월지(丑·寅)로 계산합니다. 점수는 세운·월지·일지의 합충과 용신·기신 관계를 합산한 참고치입니다.</p>';
+  }
+
+  function annualHook(A) {
+    var t = tellerOf();
+    var worst = A.caution[0];
+    return '<div class="ny-hook">' +
+      '<div class="ny-hook-top">' +
+        '<span class="ny-face"><img src="' + t.img + '" alt="' + t.name + '" /></span>' +
+        "<div><b>" + t.name + '</b><small>' + t.role + "의 한마디</small></div>" +
+      "</div>" +
+      '<p class="ny-hook-line">“' + worst.m + '월만 피해 가셔도 한 해가 달라지는데, 뒷이야기는 복채 패스에서 바로 열어드릴게요.”</p>' +
+      '<ul class="ny-hook-list">' +
+        "<li>금전·사업·건강·연애 <b>4운 전체 풀이</b> — 점수와 근거, 실천법까지</li>" +
+        "<li>주의할 달 <b>" + A.caution.slice().sort(function (x, y) { return x.m - y.m; }).map(function (c) { return c.m + "월"; }).join("·") + "</b>의 이유와 피하는 처방</li>" +
+        "<li>길한 달 " + A.good.map(function (g) { return g.m + "월"; }).join("·") + " — 돈 되는 일을 몰아 둘 시기</li>" +
+      "</ul>" +
+      '<button type="button" class="btn btn-gold" data-ny-pay="monthly">복채 패스 6,900원으로 전체 열기</button>' +
+      '<button type="button" class="btn btn-ghost" data-ny-pay="annual">1년 패스 59,000원 · 월 4,917원꼴</button>' +
+      '<p class="tiny">베타 테스트 결제 모드 · 실제 청구는 없습니다</p>' +
+      "</div>";
+  }
+
+  function renderAnnual() {
+    var box = $("#annualBody");
+    if (!box) return;
+    tagUpdate("annualTag", "newYear", "복채 패스");
+    var a = analysis();
+    if (!a) {
+      box.innerHTML = needSaju("2027 신년 총운세와 주의할 달");
+      bindCommon(box);
+      return;
+    }
+    var t = tellerOf();
+    var A = S.annual(global.Unmyeong.birth().pillars, t.name === "하윤" ? "female" : "male", 2027);
+    var full = !!(M && M.has("newYear"));
+
+    var hero =
+      '<div class="ny-hero">' +
+        '<div class="ny-year"><span class="ny-hanja">' + A.yg.hanja + "</span>" +
+          '<span class="ny-yr">' + A.year + "년 " + A.yg.name + "년 · " + H[A.yg.stemEl] + "·" + H[A.yg.branchEl] + "의 해</span>" +
+          '<span class="ny-me">일간 ' + A.meName + " " + A.meH + " · " + (A.strong ? "신강" : "신약") + " · 용신 " + H[A.yong] + "</span>" +
+        "</div>" +
+        '<div class="ny-total ' + toneCls(A.score) + '"><b>' + A.score + "</b><span>종합</span></div>" +
+      "</div>" +
+      '<div class="ny-grade"><b>' + A.grade.t + "</b> <small>" + A.grade.d + "</small></div>" +
+      '<div class="ny-kw">' + A.keywords.map(function (k, i) {
+        return '<span class="ny-kw-it' + (i === 0 ? " on" : "") + '">' + k + "</span>";
+      }).join("") + "</div>" +
+      '<div class="ny-sum">' +
+        "<p>" + A.summary.year + "</p>" +
+        "<p>" + A.summary.strength + "</p>" +
+        "<p>" + A.summary.yong + "</p>" +
+      "</div>";
+
+    box.innerHTML = hero +
+      '<div class="ny-sec-h">분야별 운세 4<span>' + (full ? "전체 공개" : "복채 패스에서 전체 공개") + "</span></div>" +
+      annualDomains(A, full) +
+      annualCaution(A, full) +
+      annualGood(A, full) +
+      (full ? "" : annualHook(A)) +
+      annualGrid(A) +
+      '<p class="tiny">2027 정미년 세운과 절기 월지, 사주의 용신·기신·합충을 대조한 간이 풀이입니다. 같은 사주라도 태어난 시각과 대운에 따라 달라질 수 있으니 재미와 참고로만 봐 주세요.</p>';
+
+    $$("[data-ny-pay]", box).forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        M.openPay(btn.getAttribute("data-ny-pay"));
+      });
+    });
+    bindCommon(box);
+  }
+
   /* 공통 바인딩(사주 입력 이동 등) */
   function bindCommon(root) {
     $$("[data-goto]", root).forEach(function (b) {
@@ -485,6 +622,7 @@
     TODAY = new Date();
     TODAY_DS = dkey(TODAY);
     TODAY_GZ = S.dayGanzi(TODAY);
+    renderAnnual();
     renderTen();
     renderDeep();
     renderCal();
