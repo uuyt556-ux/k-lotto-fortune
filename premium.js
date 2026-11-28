@@ -781,7 +781,7 @@
       if (c.key < TODAY_DS) cls += " past";
       if (s.pick === d) cls += " sel";
       cells.push('<button type="button" class="' + cls + '" data-bd-day="' + d + '" aria-label="' +
-        s.m + "월 " + d + "일 " + WD[c.wd] + (openSet[d] !== undefined ? " 길일" : cauSet[d] ? " 주의일" : "") + '">' +
+        s.m + "월 " + d + "일(" + WD[c.wd] + ")" + (openSet[d] !== undefined ? " 길일" : cauSet[d] ? " 주의일" : "") + '">' +
         "<b>" + d + "</b>" + mark + "</button>");
     }
 
@@ -817,9 +817,11 @@
       ? '<p class="bd-warn-line">주의일 ' + caution.map(function (c) { return c.d + "일(" + WD[c.wd] + ")"; }).join(" · ") + " — 충(沖)·기신이 겹쳐 큰 구매는 미루는 편이 좋아요.</p>"
       : "";
 
+    var more = Math.max(top.length - 1, 0);
     var cta = full ? "" :
-      '<div class="bd-cta"><div><b>복채 패스로 이달 길일 전부 열기</b><small>길일 ' + Math.max(top.length - 1, 0) +
-      "일의 시간대·방위와 다음 달 달력까지 · 월 6,900원</small></div>" +
+      '<div class="bd-cta"><div><b>복채 패스로 길일 달력 전부 열기</b><small>' +
+      (more ? "잠긴 길일 " + more + "일의 시간대·방위와 " : "모든 길일의 시간대·방위와 ") +
+      "다음 달 달력까지 · 월 6,900원</small></div>" +
       '<button type="button" class="btn btn-gold" data-open-plans>전체 열기</button></div>';
 
     var foot = '<p class="bd-sum">내 용신 ' + S.ELEM_H[o.yong] + "(" + o.yong + ") · 희신 " + S.ELEM_H[o.hee] + "(" + o.hee +
