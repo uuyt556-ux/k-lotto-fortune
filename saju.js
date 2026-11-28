@@ -687,8 +687,8 @@
     var h1 = months.slice(0, 6), h2 = months.slice(6);
     var a1 = avgScore(h1), a2 = avgScore(h2);
     var upFirst = a1 >= a2;
-    var better = upFirst ? h1 : h2, weaker = upFirst ? h2 : h1;
-    var bm = bestOf(better), wm = worstOf(weaker);
+    var bm1 = bestOf(h1), bm2 = bestOf(h2);
+    var peak = bestOf(months), low = worstOf(months);
     var sameYearMo = null;
     months.forEach(function (m) { if (m.factors.indexOf("sameYear") >= 0) sameYearMo = m; });
     var piv = [];
@@ -698,20 +698,27 @@
     piv.sort(function (x, y) { return Math.abs(y.d) - Math.abs(x.d); });
     var pv = piv[0];
 
-    var upText = "가장 힘이 붙는 " + bm.m + "월(" + bm.ganzi + "월 · " + bm.score + "점)에 " + ROLE_USE[bm.role] + " 몰아 두세요. "
-      + (strong ? "힘이 남는 구간이라 벌인 만큼 굴러갑니다." : "체력이 남는 구간이라 회복과 실행을 같이 가져가야 합니다.");
-    var downText = "가장 눌리는 " + wm.m + "월(" + wm.ganzi + "월 · " + wm.score + "점)에는 새 일을 벌이지 말고 정산·서류·휴식으로 쓰세요. 이 구간의 큰 결정은 앞뒤 달로 피해 잡으세요.";
-    var halves = upFirst
-      ? [{ label: "1~6월", tone: "up", avg: a1, tag: "먼저 치는 구간", text: upText },
-         { label: "7~12월", tone: "low", avg: a2, tag: "숨 고르는 구간", text: downText }]
-      : [{ label: "1~6월", tone: "low", avg: a1, tag: "준비하는 구간", text: downText },
-         { label: "7~12월", tone: "up", avg: a2, tag: "밀어붙이는 구간", text: upText }];
+    function halfText(bm, isUp) {
+      return (isUp
+        ? "구간 최고점은 " + bm.m + "월(" + bm.ganzi + "월 · " + bm.score + "점). "
+        : "구간 최고점은 " + bm.m + "월(" + bm.ganzi + "월 · " + bm.score + "점)입니다. ")
+        + ROLE_USE[bm.role] + (isUp
+          ? " 몰아 두세요. " + (strong ? "힘이 남는 구간이라 벌인 만큼 굴러갑니다." : "체력이 남는 구간이라 회복과 실행을 함께 가져가세요.")
+          : " 이 달에만 크게 걸고, 나머지 달은 정산·서류·휴식으로 지키세요.");
+    }
+    var halves = [
+      { label: "1~6월", tone: upFirst ? "up" : "low", avg: a1, tag: upFirst ? "치고 나갈 구간" : "숨 고를 구간", text: halfText(bm1, true) },
+      { label: "7~12월", tone: upFirst ? "low" : "up", avg: a2, tag: upFirst ? "숨 고를 구간" : "치고 나갈 구간", text: halfText(bm2, false) }
+    ];
     var pivotLine = "가장 크게 꺾이는 달은 " + pv.m + "월(" + pv.gz + "월), " + pv.from + "점에서 " + pv.to + "점으로 " + (pv.d > 0 ? "올라" : "내려") + "갑니다. "
       + (pv.d > 0
-        ? "이 달 전에 자금과 서류를 미리 준비해 두면 흐름을 그대로 탑니다. "
+        ? "이 달 전에 자금과 서류를 준비해 두면 흐름을 그대로 탑니다. "
         : "이 달에 걸린 큰일(계약·이사·큰 지출)은 앞이나 뒤 달로 옮기세요. ")
-      + "상반기 평균 " + a1 + "점, 하반기 평균 " + a2 + "점으로 " + (upFirst ? "상반기에 밀고 하반기에 거두는" : "상반기에 준비하고 하반기에 밀어붙이는") + " 해입니다. "
-      + (sameYearMo ? sameYearMo.m + "월(" + sameYearMo.ganzi + "월)은 세운 未가 그대로 겹치는 달이라 한 해 기운이 가장 진하게 드러나니, 큰 결정은 그 전 달에 끝내 두세요." : "");
+      + "한 해 최고점은 " + peak.m + "월 " + peak.score + "점, 최저점은 " + low.m + "월 " + low.score + "점입니다. "
+      + (Math.abs(a1 - a2) <= 2
+        ? "상반기 " + a1 + "점·하반기 " + a2 + "점으로 두 구간이 거의 같아, 시기보다 무엇을 몰아두는지가 결과를 가릅니다. "
+        : (upFirst ? "상반기 " + a1 + "점·하반기 " + a2 + "점으로 상반기에 밀고 하반기에 거두는 해입니다. " : "상반기 " + a1 + "점·하반기 " + a2 + "점으로 상반기에 준비하고 하반기에 밀어붙이는 해입니다. "))
+      + (sameYearMo ? sameYearMo.m + "월(" + sameYearMo.ganzi + "월)은 세운 未가 겹치는 달이라 기운이 가장 진하게 드러나니, 큰 결정은 그 전 달에 끝내 두세요." : "");
 
     /* ─ 3) 돈이 붙는 길 vs 새는 구멍 ─ */
     var mLead = "내 사주에서 돈은 내가 누르는 " + H[jaeEl] + "(" + jaeEl + ") 기운이라, " + MONEY_PATH[jaeEl] + "에서 붙습니다. "
@@ -723,32 +730,36 @@
       ? "재성이 세운에 들어온 해라, 값이 붙은 일을 그대로 챙기면 통장이 두꺼워집니다. 쥔 손을 벌리면 같이 나갑니다."
       : "세운에 재성이 없으니 큰돈이 굴러들어 오는 해는 아닙니다. 새는 구멍을 막는 것만으로 1년 성과가 달라집니다.");
     earn.push(sikIn || rc["식상"] >= 2
-      ? "내가 낳는 " + H[sikEl] + "(" + sikEl + ") 기운이 " + rc["식상"] + "자" + (sikIn ? "에 세운까지 더해져" : "로") + ", 만들어 알리는 만큼 값이 붙습니다. 상품·콘텐츠·설명을 늘리는 쪽이 남는 장사입니다."
+      ? "내가 낳는 " + H[sikEl] + "(" + sikEl + ") 기운이 " + rc["식상"] + "자" + (sikIn ? "에 세운까지 더해져" : "로") + ", 만들어 알리는 만큼 값이 붙습니다. 상품·콘텐츠·설명을 늘리세요."
       : "표현(식상)이 얇아 새로 알리기보다, 이미 있는 상품의 가격·재고·상세를 다듬는 쪽이 돈이 됩니다.");
     earn.push(strong
-      ? "신강한 힘을 밖으로 쓰는 구조라, 결정을 붙들고 있으면 재물이 아니라 피로가 쌓입니다. 정한 일은 그 주에 결제와 정산까지 끝내세요."
+      ? "신강한 힘을 밖으로 쓰는 구조라, 결정을 붙들면 재물이 아니라 피로가 쌓입니다. 정한 일은 그 주에 정산까지 끝내세요."
       : "혼자 다 벌려 들면 체력에서 끊깁니다. 반복 업무는 넘기고 결정에만 힘을 쓰세요.");
     var leak = [];
     if (c.dayClash) leak.push("일지 " + bJ(c.dayBrName, "과", "와") + " 세운의 충 — 보증, 공동명의, 구두 약속. 종이에 남기지 않은 돈은 올해 돌아오지 않습니다.");
-    if (rc["비겁"] >= 2) leak.push("비겁 " + rc["비겁"] + "자 — 지인 거래·동업 분배. 시작할 때 지분과 정산일을 정하지 않으면 끝에서 갈라집니다.");
-    if (jaeGi) leak.push("재성 " + H[jaeEl] + "이 기신 — 들어온 돈이 그대로 나가기 쉬워, 수익금 30%는 손대지 않는 계좌로 먼저 옮기세요.");
-    if (rc["인성"] >= 2 && leak.length < 3) leak.push("인성 " + rc["인성"] + "자 — 구독·교육·자격에 새는 고정비. 끝내지 않은 강의와 안 쓰는 구독이 그대로 지출입니다.");
+    if (rc["비겁"] >= 2) leak.push("비겁 " + rc["비겁"] + "자 — 지인 거래·동업 분배. 시작할 때 지분과 정산일을 안 정하면 끝에서 갈라집니다.");
+    if (jaeGi) leak.push("재성 " + hj(jaeEl) + " 기신 — 들어온 돈이 그대로 나가기 쉬워, 수익금 30%는 손대지 않는 계좌로 먼저 옮기세요.");
+    if (rc["인성"] >= 2 && leak.length < 3) leak.push("인성 " + rc["인성"] + "자 — 구독·교육·자격에 새는 고정비. 끝내지 않은 강의가 그대로 지출입니다.");
     if (rc["식상"] >= 3 && leak.length < 3) leak.push("식상 " + rc["식상"] + "자 — 벌이려는 마음이 앞서 새 채널·새 기기에 먼저 돈이 나갑니다. 결제 전 하루만 두세요.");
-    if (leak.length < 3) leak.push("무리한 확장 — 매출이 오른 달에 지출을 먼저 늘리는 패턴. 늘릴 것은 사람이 아니라 재고 회전입니다.");
-    if (leak.length < 3) leak.push("충동 지출 — 새 기기·새 강의·새 채널. 하루만 미루면 절반은 사라집니다.");
+    var fallback = [
+      "무리한 확장 — 매출이 오른 달에 지출부터 늘리는 패턴. 늘릴 것은 사람이 아니라 재고입니다.",
+      "충동 지출 — 새 기기·새 강의·새 채널. 하루만 미루면 절반은 사라집니다.",
+      "고정비 — 매달 새는 구독·통신·보험료. 목록으로 만들어 안 쓰는 것부터 끊으세요."
+    ];
+    for (var li = 0; li < fallback.length && leak.length < 3; li++) leak.push(fallback[li]);
     leak = leak.slice(0, 3);
 
     /* ─ 4) 귀인과 대인·문서 ─ */
     var gM = months.filter(function (m) { return m.role === "관성" && m.score >= 66; });
     var goodM = gM.length ? mList(gM) : mList(good.slice(0, 2));
     var badM = mList(caution.slice(0, 2));
-    var q1 = "올해 나를 살리는 기운은 나를 생하는 " + H[inEl] + "(" + inEl + ")입니다. 귀인은 " + EL_PERSON[inEl] + " — 이런 사람의 말을 한 번 더 듣고, 소개는 받아 두세요. "
+    var q1 = "올해 나를 살리는 기운은 나를 생하는 " + H[inEl] + "(" + inEl + ")입니다. 귀인은 " + EL_PERSON[inEl] + " — 이 사람의 말을 한 번 더 듣고 소개를 받아 두세요. "
       + (inEl === o.yong || inEl === o.hee ? "그 기운이 용신·희신과 맞아 실제 도움이 됩니다." : inEl === o.gi ? "다만 그 기운이 기신 쪽이라 조언은 한 번 걸러 쓰세요." : "결정적인 순간에 이 사람이 다리를 놓아 줍니다.");
     var q2 = (biIn || rc["비겁"] >= 2)
       ? "마찰은 가까운 사람에게서 옵니다. 비겁이 겹치는 해라 친구·형제·동업자와 돈 이야기에서 틀어지기 쉽고, " + EL_FRICTION[o.gi] + "에 말이 날카로워집니다."
       : "마찰은 윗사람·거래처에서 옵니다. " + EL_FRICTION[o.gi] + "이 문제라, 같은 말도 근거를 붙여 하면 통하고 감정으로 하면 남습니다.";
     var q3 = "큰 계약·이직·서명은 기운이 받쳐 주는 " + goodM + "에 잡고, " + badM + "에는 서명을 다음 달로 미루세요. "
-      + (c.dayClash ? "일지가 흔들리는 해라 배우자·가족과의 약속은 날짜를 미리 확정해 두면 싸움이 줄어듭니다." : "가족과의 약속을 지키는 것만으로 신뢰가 쌓이는 해입니다.");
+      + (c.dayClash ? "일지가 흔들리는 해라 배우자·가족과의 약속은 날짜를 미리 확정해 두면 싸움이 줄어듭니다." : "가족과의 약속만 지켜도 신뢰가 쌓입니다.");
     if (c.monthClash) q3 += " 월지 " + bJ(c.monBrName, "이", "가") + " 흔들려 가족 쪽 일정이 겹치니, 돈과 시간을 미리 말해 두세요.";
 
     /* ─ 5) 개운 처방 ─ */
