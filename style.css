@@ -33,7 +33,7 @@ body {
   background-attachment: fixed, fixed, fixed;
   line-height: 1.62;
   -webkit-font-smoothing: antialiased;
-  padding-bottom: 150px;
+  padding-bottom: 172px;
 }
 img { max-width: 100%; }
 button { font-family: inherit; }
@@ -368,41 +368,100 @@ select:disabled { opacity: .55; }
 .foot a { color: var(--meok-3); text-decoration: none; border-bottom: 1px solid var(--line); }
 
 /* ───── 하단 광고 · 내비 ───── */
+:root { --nav-h: 76px; --ad-h: 44px; }
+
+/* 광고 배너 — 내비 위에 얇고 차분하게 */
 .adbar {
-  position: fixed; left: 0; right: 0; bottom: 56px; z-index: 40;
-  background: rgba(244, 236, 220, .96);
-  border-top: 1px solid rgba(201, 151, 44, .22);
+  position: fixed; left: 0; right: 0; bottom: var(--nav-h); z-index: 40;
+  background: linear-gradient(180deg, rgba(250, 245, 234, .97), rgba(243, 235, 220, .99));
+  border-top: 1px solid rgba(201, 151, 44, .26);
+  box-shadow: 0 -6px 16px rgba(60, 45, 20, .06);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
 }
 .adbar-inner {
-  max-width: 460px; margin: 0 auto; height: 54px; display: flex; align-items: center; gap: 10px; padding: 0 14px;
+  max-width: 460px; margin: 0 auto; height: var(--ad-h); display: flex; align-items: center; gap: 9px; padding: 0 14px;
 }
 .ad-badge {
-  font-size: 8.5px; letter-spacing: .5px; color: #8A7A5C; border: 1px solid rgba(138, 122, 92, .45);
+  font-size: 8px; letter-spacing: .5px; color: #8A7A5C; border: 1px solid rgba(138, 122, 92, .45);
   border-radius: 3px; padding: 1px 4px; flex: 0 0 auto;
 }
 .ad-slot {
-  flex: 1; height: 34px; border: 1px dashed rgba(138, 122, 92, .5); border-radius: 7px;
+  flex: 1; height: 28px; border: 1px dashed rgba(138, 122, 92, .42); border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 10.5px; color: #9A8C71; letter-spacing: .3px;
+  font-size: 10px; color: #9A8C71; letter-spacing: .3px;
+  background: rgba(255, 253, 247, .55);
 }
-.ad-close { border: 0; background: none; color: #9A8C71; font-size: 16px; padding: 2px 0 2px 4px; cursor: pointer; }
+.ad-close { border: 0; background: none; color: #9A8C71; font-size: 15px; padding: 2px 0 2px 4px; cursor: pointer; }
 
+/* 하단 내비 — 먹빛 옻칠 바 + 상단 금빛 테두리 + 입체 그림자 */
 .nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
-  background: rgba(251, 247, 238, .97);
-  border-top: 1px solid var(--line-gold);
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, #2F2419 0%, #241A14 44%, #191210 100%);
+  border-top: 1px solid rgba(231, 200, 122, .55);
+  box-shadow:
+    0 -16px 34px rgba(24, 14, 4, .34),
+    0 -4px 12px rgba(24, 14, 4, .2),
+    inset 0 1px 0 rgba(255, 232, 180, .16);
   padding-bottom: env(safe-area-inset-bottom);
 }
-.nav-inner { max-width: 460px; margin: 0 auto; display: flex; height: 56px; }
-.nav a {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  text-decoration: none; color: var(--meok-3); font-size: 10px; letter-spacing: .2px;
+.nav::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, rgba(201, 151, 44, 0) 0%, #D8AE56 14%, #F6E4AE 50%, #D8AE56 86%, rgba(201, 151, 44, 0) 100%);
+  opacity: .92;
 }
-.nav a svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.nav a.on { color: var(--juhong); }
-.nav a.on svg { stroke: var(--juhong); }
+.nav::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(130% 95% at 50% 128%, rgba(201, 151, 44, .2), rgba(201, 151, 44, 0) 62%);
+}
+.nav-inner {
+  position: relative; z-index: 1;
+  max-width: 460px; margin: 0 auto; display: flex; align-items: stretch; gap: 4px;
+  height: var(--nav-h); padding: 8px 8px 9px;
+}
+.nav a {
+  position: relative; flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  text-decoration: none; color: #EDE0C7;
+  font-size: 12px; font-weight: 700; line-height: 1.12; letter-spacing: .1px;
+  border-radius: 16px; padding: 3px 1px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .36);
+  transition: color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.nav a svg {
+  width: 23px; height: 23px; display: block;
+  stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.nav a:active { transform: scale(.96); }
+
+/* 선택된 탭 — 금박 알약 + 먹빛 글자 */
+.nav a.on {
+  color: #2A1A0A; font-weight: 800;
+  background: linear-gradient(180deg, #FBEDC4 0%, #EDD08A 36%, #D3A546 78%, #BA8B2B 100%);
+  box-shadow:
+    0 7px 16px rgba(0, 0, 0, .4),
+    0 0 0 1px rgba(255, 236, 186, .6),
+    inset 0 1px 0 rgba(255, 250, 232, .9),
+    inset 0 -2px 4px rgba(120, 80, 10, .3);
+  text-shadow: 0 1px 0 rgba(255, 248, 226, .55);
+}
+.nav a.on svg { stroke: #2A1A0A; stroke-width: 2.05; }
+
+/* 멤버십 탭 — 눌러보고 싶은 작은 주홍 점 */
+.nav a[data-target="membership"]::after {
+  content: ""; position: absolute; top: 6px; left: 50%; margin-left: 9px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #FF9C7C, #B83B2A 70%);
+  box-shadow: 0 0 0 2px #241A14, 0 0 9px rgba(230, 96, 62, .9);
+  animation: navDot 2.6s ease-in-out infinite;
+}
+.nav a[data-target="membership"].on::after {
+  background: radial-gradient(circle at 34% 30%, #FFD9C6, #C0331F 70%);
+  box-shadow: 0 0 0 2px rgba(214, 170, 88, .95), 0 0 8px rgba(184, 59, 42, .8);
+}
+@keyframes navDot {
+  0%, 100% { transform: scale(1); opacity: .95; }
+  50% { transform: scale(1.22); opacity: 1; }
+}
 
 /* ───── 모달 · 토스트 ───── */
 .modal-back {
@@ -429,7 +488,7 @@ select:disabled { opacity: .55; }
 .modal .tiny { font-size: 10px; color: var(--meok-3); margin-top: 10px; }
 
 .toast {
-  position: fixed; left: 50%; bottom: 124px; transform: translateX(-50%) translateY(10px);
+  position: fixed; left: 50%; bottom: 134px; transform: translateX(-50%) translateY(10px);
   background: rgba(30, 27, 24, .93); color: #FFF6E6; font-size: 12.5px;
   padding: 9px 15px; border-radius: 999px; z-index: 95; opacity: 0; pointer-events: none;
   transition: opacity .22s, transform .22s; white-space: nowrap; max-width: 90vw;
@@ -439,7 +498,7 @@ select:disabled { opacity: .55; }
 
 /* ───── 반응형 ───── */
 @media (min-width: 520px) {
-  body { padding-bottom: 160px; }
+  body { padding-bottom: 184px; }
   .wrap { padding: 0 18px; }
   .card { padding: 20px 20px; }
 }
