@@ -17,8 +17,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=20" />
-<link rel="stylesheet" href="webtoon.css?v=20" />
+<link rel="stylesheet" href="style.css?v=21" />
+<link rel="stylesheet" href="webtoon.css?v=21" />
 <style>
 /* 인트로 스플래시 — 외부 CSS를 기다리지 않고 첫 페인트부터 화면을 덮도록 하는 최소 스타일 */
 html.splashing { background-color: #100E0C; }
@@ -259,6 +259,7 @@ html.splashing, html.splashing body { overflow: hidden; }
       <button type="button" role="tab" data-tab="numbers" aria-selected="true" class="on">오늘의 번호</button>
       <button type="button" role="tab" data-tab="weekly" aria-selected="false">이번 주 5조합</button>
       <button type="button" role="tab" data-tab="wish" aria-selected="false">소원 부적</button>
+      <button type="button" role="tab" data-tab="buydays" aria-selected="false">구매 길일</button>
     </div>
     <div class="tabpane" data-tabpane="numbers:numbers">
       <section id="numbers" class="card" aria-labelledby="numbers-title">
@@ -328,6 +329,18 @@ html.splashing, html.splashing body { overflow: hidden; }
           </div>
           <p class="tiny" id="wishHint">미리보기에는 워터마크가 들어갑니다 · 10,000원 결제 후 원본 저장·공유가 열립니다</p>
         </div>
+      </section>
+
+    </div>
+    <div class="tabpane" data-tabpane="numbers:buydays" hidden>
+      <section id="buydays" class="card premium bd-sec" aria-labelledby="buydays-title">
+        <div class="card-head">
+          <span class="hanja">日</span>
+          <h2 id="buydays-title">로또 구매 길일</h2>
+          <span class="right gate-tag" id="buyTag">복채 패스</span>
+        </div>
+        <p class="hint" style="margin:0 0 10px">내 사주의 용신·재성과 그날의 일진이 맞물리는 날을 골라, 복채를 걸기 좋은 날과 피할 날을 달력으로 보여 드립니다.</p>
+        <div class="gate" id="buyBody"></div>
       </section>
 
     </div>
@@ -635,12 +648,12 @@ html.splashing, html.splashing body { overflow: hidden; }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lunar.js?v=20"></script>
-<script src="saju.js?v=20"></script>
-<script src="account.js?v=20"></script>
-<script src="premium.js?v=20"></script>
-<script src="webtoon.js?v=20"></script>
-<script src="wish.js?v=20"></script>
-<script src="app.js?v=20"></script>
+<script src="lunar.js?v=21"></script>
+<script src="saju.js?v=21"></script>
+<script src="account.js?v=21"></script>
+<script src="premium.js?v=21"></script>
+<script src="webtoon.js?v=21"></script>
+<script src="wish.js?v=21"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

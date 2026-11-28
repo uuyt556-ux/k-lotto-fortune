@@ -209,7 +209,9 @@
       var group = bar.getAttribute("data-tabgroup");
       $$("[data-tab]", bar).forEach(function (b) {
         b.addEventListener("click", function () {
-          setTab(group, b.getAttribute("data-tab"), b.getAttribute("data-view") || null, { scroll: false });
+          var key = b.getAttribute("data-tab");
+          setTab(group, key, b.getAttribute("data-view") || null, { scroll: false });
+          if (group === "numbers" && key === "buydays" && window.Premium && window.Premium.renderBuy) window.Premium.renderBuy();
           var panel = bar.parentElement;
           if (panel && panel.classList.contains("panel")) {
             window.scrollTo({ top: 0, behavior: "smooth" });

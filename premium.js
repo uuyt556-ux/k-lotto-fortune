@@ -711,6 +711,151 @@
     bindCommon(box);
   }
 
+  /* ───────── 6) 로또 구매 길일 (번호 탭 · 월별 달력) ───────── */
+  var WD = ["일", "월", "화", "수", "목", "금", "토"];
+
+  function buyState() {
+    if (!state.buy) state.buy = { y: TODAY.getFullYear(), m: TODAY.getMonth() + 1, pick: null };
+    return state.buy;
+  }
+  function buyShift(n) {
+    var s = buyState();
+    var start = TODAY.getFullYear() * 12 + TODAY.getMonth();
+    var idx = s.y * 12 + (s.m - 1) + n;
+    if (idx < start || idx > start + 11) return false;
+    s.y = Math.floor(idx / 12);
+    s.m = (idx % 12) + 1;
+    s.pick = null;
+    return true;
+  }
+  function buyFull() { return !!(M && M.has("noAds")); }
+
+  function renderBuy() {
+    var box = $("#buyBody");
+    if (!box) return;
+    tagUpdate("buyTag", "noAds", "복채 패스");
+    var a = analysis();
+    if (!a) { box.innerHTML = needSaju("로또 구매 길일 달력"); bindCommon(box); return; }
+
+    var s = buyState();
+    var isThis = (s.y === TODAY.getFullYear() && s.m === TODAY.getMonth() + 1);
+    var res = S.luckyBuyDays(a, s.y, s.m, { fromKey: isThis ? TODAY_DS : null });
+    var full = buyFull();
+    var top = res.top, caution = res.caution, o = res.o;
+    var firstCell = new Date(s.y, s.m - 1, 1).getDay();
+    var lastDay = new Date(s.y, s.m, 0).getDate();
+    var startIdx = TODAY.getFullYear() * 12 + TODAY.getMonth();
+    var curIdx = s.y * 12 + (s.m - 1);
+    var canPrev = curIdx > startIdx, canNext = curIdx < startIdx + 11;
+
+    /* 무료는 맨 위 길일 하나만 열고 나머지는 잠급니다 */
+    var openSet = {};
+    top.forEach(function (c, i) { openSet[c.d] = full || i === 0; });
+
+    var badgeTxt;
+    if (!top.length) badgeTxt = "이달에는 남은 길일이 없어요";
+    else if (full) badgeTxt = s.m + "월 추천: " + top.map(function (c) { return c.d + "일(" + WD[c.wd] + ")"; }).join(" · ");
+    else {
+      badgeTxt = s.m + "월 최고 길일: " + top[0].d + "일(" + WD[top[0].wd] + ")";
+      if (top.length > 1) badgeTxt += '<span class="bd-hide"> · 외 ' + (top.length - 1) + "일 잠금</span>";
+    }
+
+    /* 미니 월간 달력 */
+    var byDay = {};
+    res.days.forEach(function (c) { byDay[c.d] = c; });
+    var cauSet = {};
+    caution.forEach(function (c) { cauSet[c.d] = 1; });
+    var cells = [];
+    for (var i = 0; i < firstCell; i++) cells.push('<span class="bd-cell bd-blank"></span>');
+    for (var d = 1; d <= lastDay; d++) {
+      var c = byDay[d];
+      var cls = "bd-cell", mark = "";
+      if (openSet[d] !== undefined) {
+        cls += " good";
+        mark = openSet[d] ? '<i class="bd-star">★</i>' : '<i class="bd-star dim">✦</i>';
+      } else if (cauSet[d]) {
+        cls += " warn";
+        mark = '<i class="bd-warn">△</i>';
+      }
+      if (c.key === TODAY_DS) cls += " today";
+      if (c.key < TODAY_DS) cls += " past";
+      if (s.pick === d) cls += " sel";
+      cells.push('<button type="button" class="' + cls + '" data-bd-day="' + d + '" aria-label="' +
+        s.m + "월 " + d + "일 " + WD[c.wd] + (openSet[d] !== undefined ? " 길일" : cauSet[d] ? " 주의일" : "") + '">' +
+        "<b>" + d + "</b>" + mark + "</button>");
+    }
+
+    /* 날짜를 눌렀을 때 달력 아래 한 줄 상세 */
+    function noteHtml() {
+      var p = byDay[s.pick];
+      if (!p) return '<p class="bd-note-t">날짜를 누르면 그날의 일진·길시·방위를 여기서 바로 볼 수 있어요.</p>';
+      var open = !!openSet[p.d];
+      var head = '<div class="bd-note-h"><b>' + s.m + "월 " + p.d + "일(" + WD[p.wd] + ")</b><span>" + p.gz + "일</span>" +
+        (openSet[p.d] !== undefined ? '<em class="bd-tag good">길일</em>' : cauSet[p.d] ? '<em class="bd-tag warn">주의일</em>' : "") +
+        (open ? '<em class="bd-pt">' + p.score + "점</em>" : '<em class="bd-pt lock">🔒</em>') + "</div>";
+      if (!open) return head + '<p class="bd-note-b">이날의 사주 이유와 <b>길시·판매점 방위</b>는 복채 패스에서 열립니다.</p>';
+      return head + '<p class="bd-note-b">' + p.why + "</p>" +
+        '<div class="bd-meta"><span>길시 <b>' + p.time + "</b></span><span>방위 <b>" + p.dir + "</b></span></div>";
+    }
+
+    var cards = top.length ? top.map(function (c, i) {
+      var open = full || i === 0;
+      return '<div class="bd-item' + (open ? "" : " locked") + (s.pick === c.d ? " sel" : "") + '" data-bd-day="' + c.d + '">' +
+        '<span class="bd-dt"><b>' + c.d + "</b><small>" + WD[c.wd] + "</small></span>" +
+        '<div class="bd-body">' +
+          '<div class="bd-line"><span class="bd-gz">' + c.gz + "일</span>" +
+            (open ? '<span class="bd-score">구매 점수 <b>' + c.score + "</b></span>" : '<span class="bd-score lock">🔒 구매 점수</span>') +
+          "</div>" +
+          '<p class="bd-why' + (open ? "" : " blur") + '">' + c.why + "</p>" +
+          '<div class="bd-meta' + (open ? "" : " blur") + '"><span>길시 <b>' + c.time + "</b></span><span>방위 <b>" + c.dir + "</b></span></div>" +
+        "</div>" +
+        (open ? "" : '<span class="bd-lock-ico" aria-hidden="true">🔒</span>') +
+      "</div>";
+    }).join("") : '<p class="hint">' + (isThis ? "이번 달 남은 기간에는 길일이 없습니다. ‘다음 달’로 넘겨 보세요." : "이 달에는 길일이 없습니다.") + "</p>";
+
+    var warnTxt = caution.length
+      ? '<p class="bd-warn-line">주의일 ' + caution.map(function (c) { return c.d + "일(" + WD[c.wd] + ")"; }).join(" · ") + " — 충(沖)·기신이 겹쳐 큰 구매는 미루는 편이 좋아요.</p>"
+      : "";
+
+    var cta = full ? "" :
+      '<div class="bd-cta"><div><b>복채 패스로 이달 길일 전부 열기</b><small>길일 ' + Math.max(top.length - 1, 0) +
+      "일의 시간대·방위와 다음 달 달력까지 · 월 6,900원</small></div>" +
+      '<button type="button" class="btn btn-gold" data-open-plans>전체 열기</button></div>';
+
+    var foot = '<p class="bd-sum">내 용신 ' + S.ELEM_H[o.yong] + "(" + o.yong + ") · 희신 " + S.ELEM_H[o.hee] + "(" + o.hee +
+      ") · 재성 " + S.ELEM_H[res.jae] + "(" + res.jae + ")이 살아나는 날에 힘을 싣습니다.</p>" +
+      '<p class="tiny">일진(60갑자)과 사주의 용신·재성·합충을 계산한 참고용 달력입니다. 당첨은 보장하지 않습니다.</p>';
+
+    box.innerHTML =
+      '<div class="bd-head">' +
+        '<button type="button" class="bd-nav" data-bd-nav="-1"' + (canPrev ? "" : " disabled") + ' aria-label="이전 달">‹</button>' +
+        '<div class="bd-month"><b>' + s.y + "년 " + s.m + "월</b><small>" + (isThis ? "이번 달" : curIdx - startIdx + "개월 뒤") + "</small></div>" +
+        '<button type="button" class="bd-nav" data-bd-nav="1"' + (canNext ? "" : " disabled") + ' aria-label="다음 달">›</button>' +
+      "</div>" +
+      '<div class="bd-badge"><span>이달의 로또 구매 길일</span><b>' + badgeTxt + "</b></div>" +
+      '<div class="bd-cal"><div class="bd-wk">' +
+        WD.map(function (w, i) { return "<span" + (i === 0 ? ' class="sun"' : i === 6 ? ' class="sat"' : "") + ">" + w + "</span>"; }).join("") +
+      '</div><div class="bd-grid">' + cells.join("") + "</div></div>" +
+      '<div class="bd-note" id="bdNote">' + noteHtml() + "</div>" +
+      warnTxt +
+      '<div class="bd-list">' + cards + "</div>" +
+      foot + cta;
+
+    $$("[data-bd-nav]", box).forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (buyShift(parseInt(b.getAttribute("data-bd-nav"), 10))) { renderBuy(); }
+      });
+    });
+    $$("[data-bd-day]", box).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var d = parseInt(b.getAttribute("data-bd-day"), 10);
+        s.pick = (s.pick === d) ? null : d;
+        renderBuy();
+      });
+    });
+    bindCommon(box);
+  }
+
   /* 공통 바인딩(사주 입력 이동 등) */
   function bindCommon(root) {
     $$("[data-goto]", root).forEach(function (b) {
@@ -753,10 +898,12 @@
     renderDeep();
     renderCal();
     renderLucky();
+    renderBuy();
   }
 
   global.Premium = {
     render: render,
+    renderBuy: renderBuy,
     /* 사주 화면의 카테고리 칩(총운 / 4대 운세 / 주의할 달)이 호출합니다. */
     setView: function (v) {
       state.view = v || "total";

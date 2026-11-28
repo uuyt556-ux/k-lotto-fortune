@@ -176,6 +176,8 @@
     return {
       counts: counts, lacking: lacking, strongest: strongest, total: total,
       dayEl: dayEl, dayStem: dayStem,
+      dayBranch: s.pillars[1].branch, monthBranch: s.pillars[2].branch, yearBranch: s.pillars[3].branch,
+      dayBranchName: BRANCHES[s.pillars[1].branch],
       dayStemName: STEMS[dayStem] + "(" + STEMS_H[dayStem] + ")",
       yinyang: dayStem % 2 === 0 ? "양(陽)" : "음(陰)",
       chars: chars,
@@ -1208,11 +1210,117 @@
     return mo;
   }
 
+  /* ───────── 로또 구매 길일 (월별 추천 달력) ─────────
+     그 달의 날마다 60갑자 일진을 구해, 사주의 일간·용신·희신·기신·재성과
+     일지의 육합·삼합·충, 일간 천간합을 맞물려 구매 점수를 냅니다.
+     같은 사주·같은 날에는 언제 계산해도 같은 결과가 나옵니다. */
+  var SAMHAP = [[0, 4, 8], [1, 5, 9], [2, 6, 10], [3, 7, 11]];   /* 자진신 · 축사유 · 인오술 · 묘미해 */
+  var GAN_HAP = [5, 6, 7, 8, 9, 0, 1, 2, 3, 4];                  /* 갑기 · 을경 · 병신 · 정임 · 무계 */
+  var BUY_REL = { receives: 8, gives: -2, controls: 10, controlled: -11, same: 5, neutral: 0 };
+  var BUY_DIR = { 목: "동쪽 판매점", 화: "남쪽 판매점", 토: "집·직장 가까운 곳", 금: "서쪽 판매점", 수: "북쪽 판매점" };
+  var WD_NAME = ["일", "월", "화", "수", "목", "금", "토"];
+
+  function two(n) { return (n < 10 ? "0" : "") + n; }
+
+  function buyWhy(c) {
+    var out = [];
+    if (c.relBr === "hap") out.push("사주 일지 " + BRANCHES[c.myBr] + "와 육합(合)을 이뤄 재물의 문이 열리는 날");
+    else if (c.relBr === "samhap") out.push("사주 일지와 삼합(三合)으로 기운이 크게 모이는 날");
+    if (c.tags.indexOf("yong") >= 0) out.push("일진의 " + hj(c.be) + " 내 용신이라 기운이 가장 곧게 서는 날");
+    else if (c.tags.indexOf("hee") >= 0) out.push("희신 " + hj(c.be) + " 들어와 모자란 힘을 채워 주는 날");
+    if (c.tags.indexOf("lack") >= 0 && c.tags.indexOf("yong") < 0 && c.tags.indexOf("hee") < 0) out.push("사주에 없던 " + hj(c.be) + " 하늘에서 채워지는 날");
+    if (c.rel === "controls" || c.be === c.jae) out.push("일진이 재성(財星) " + hj(c.jae) + " 자리라 내가 재물을 직접 쥐는 날");
+    else if (c.rel === "receives") out.push("일진이 나를 생(生)해 주어 몸과 마음이 편한 날");
+    else if (c.rel === "same") out.push("내 기운과 같은 오행이 겹쳐 추진력이 붙는 날");
+    if (!out.length) out.push("기운이 고르게 도는 무난한 날");
+    if (c.stemHap) out.push("일간 " + STEMS[c.myStem] + "와 천간합(合)을 이뤄 귀인의 도움을 받기 쉬운 날");
+    return out.slice(0, 2).join(". ") + ".";
+  }
+
+  function buyCautionWhy(c) {
+    if (c.relBr === "chong") return "사주 일지 " + BRANCHES[c.myBr] + "를 정면으로 부딪는 충(沖)이라 마음이 급해지고 판단이 흔들리기 쉬운 날입니다.";
+    if (c.tags.indexOf("gi") >= 0) return hj(c.be) + " 기신(忌神)으로 들어와 지출과 구설이 따라붙기 쉬운 날입니다.";
+    return "일진이 내 사주를 누르는 자리라 큰 구매는 다음 길일로 미루는 편이 좋습니다.";
+  }
+
+  function luckyBuyDays(saju, year, month, opts) {
+    opts = opts || {};
+    var o = ohaeng(saju);
+    var me = saju.dayEl, myBr = saju.dayBranch, myStem = saju.dayStem;
+    var jae = CON[me];
+    var last = new Date(year, month, 0).getDate();
+    var days = [];
+    for (var d = 1; d <= last; d++) {
+      var date = new Date(year, month - 1, d);
+      var gz = dayGanzi(date);
+      var be = gz.branchEl, se = gz.stemEl;
+      var score = 52, tags = [], relBr = "none", stemHap = false;
+
+      /* 지지 오행 — 용신·희신·부족·기신 */
+      if (be === o.yong) { score += 17; tags.push("yong"); }
+      else if (be === o.hee) { score += 11; tags.push("hee"); }
+      if (saju.lacking.indexOf(be) >= 0) { score += 7; tags.push("lack"); }
+      if (be === o.gi) { score -= 15; tags.push("gi"); }
+      /* 천간 오행 */
+      if (se === o.yong) score += 6;
+      else if (se === o.hee) score += 4;
+      if (se === o.gi) score -= 7;
+      /* 일간과의 관계 — 재성·인성 */
+      var rel = relation(be, me);
+      score += BUY_REL[rel];
+      if (be === jae) score += 6;
+      /* 일지 육합·삼합·충 */
+      if (myBr !== null && myBr !== undefined) {
+        if (CHONG[myBr] === gz.branch) { score -= 15; relBr = "chong"; }
+        else if (HE6[myBr] === gz.branch) { score += 10; relBr = "hap"; }
+        else if (SAMHAP.some(function (g) { return g.indexOf(myBr) >= 0 && g.indexOf(gz.branch) >= 0; })) { score += 7; relBr = "samhap"; }
+      }
+      /* 일간 천간합 */
+      if (myStem !== null && myStem !== undefined && GAN_HAP[myStem] === gz.stem) { score += 5; stemHap = true; }
+      /* 사주마다 흔들림을 조금 다르게 — 같은 사주면 같은 값 */
+      score += (hash(year + "-" + month + "-" + d + "|" + (saju.dayStemName || "") + "|" + (myBr === undefined || myBr === null ? "" : BRANCHES[myBr])) % 7) - 3;
+      score = Math.max(28, Math.min(98, score));
+
+      var timeEl = o.yong;
+      if (be === o.yong || be === o.hee || be === jae || saju.lacking.indexOf(be) >= 0) timeEl = be;
+      else if (se === o.yong || se === o.hee) timeEl = se;
+      var dirEl = timeEl;
+      var c = {
+        d: d, wd: date.getDay(), wdName: WD_NAME[date.getDay()],
+        key: year + "-" + two(month) + "-" + two(d), date: date,
+        gz: gz.name, gzH: gz.hanja, be: be, se: se,
+        score: score, rel: rel, relBr: relBr, stemHap: stemHap, tags: tags,
+        myBr: myBr, myStem: myStem, jae: jae,
+        timeEl: timeEl, time: ELEM_TIME[timeEl], dir: BUY_DIR[dirEl]
+      };
+      c.kind = (relBr === "chong" || tags.indexOf("gi") >= 0 || score < 44) ? "caution" : "good";
+      c.why = c.kind === "caution" ? buyCautionWhy(c) : buyWhy(c);
+      days.push(c);
+    }
+
+    var from = opts.fromKey || null;
+    function after(c) { return !from || c.key >= from; }
+    var top = days.filter(function (c) { return c.kind === "good" && after(c); })
+      .sort(function (x, y) { return y.score - x.score || x.d - y.d; })
+      .slice(0, opts.limit || 6)
+      .sort(function (x, y) { return x.d - y.d; });
+    var caution = days.filter(function (c) { return c.kind === "caution" && after(c); })
+      .sort(function (x, y) { return x.score - y.score || x.d - y.d; })
+      .slice(0, 2)
+      .sort(function (x, y) { return x.d - y.d; });
+
+    return {
+      year: year, month: month, o: o, jae: jae, myBr: myBr, myStem: myStem,
+      days: days, top: top, caution: caution
+    };
+  }
+
   global.Saju = {
     pillars: pillars, analyze: analyze, dayGanzi: dayGanzi, fortune: fortune, ohaeng: ohaeng,
     annual: annual, yearGanzi: yearGanzi, roleOf: roleOf, relTo: relTo,
     BODY_PART: BODY_PART, ROLE_MONTH: ROLE_MONTH,
     recommend: recommend, reasonLines: reasonLines, winRank: winRank,
+    luckyBuyDays: luckyBuyDays, BUY_DIR: BUY_DIR, WD_NAME: WD_NAME,
     ELEMS: ELEMS, ELEM_H: ELEM_H, ELEM_COLOR: ELEM_COLOR, ELEM_NUMS: ELEM_NUMS,
     STEMS: STEMS, STEMS_H: STEMS_H, BRANCHES: BRANCHES, BRANCHES_H: BRANCHES_H,
     BRANCH_EL: BRANCH_EL, STEM_EL: STEM_EL, ANIMALS: ANIMALS, HOUR_LABEL: HOUR_LABEL,
