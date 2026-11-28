@@ -462,7 +462,7 @@
   function toneCls(s) { return s >= 76 ? "hot" : s >= 66 ? "mid" : "low"; }
 
   function annualDomains(A, full) {
-    return '<div class="ny-doms">' + A.domains.map(function (d) {
+    return '<div class="ny-doms' + (full ? "" : " free") + '">' + A.domains.map(function (d) {
       var body = full
         ? '<div class="ny-dom-body"><p class="ny-lead">' + d.lead + "</p>" +
             d.lines.map(function (l) { return "<p>" + l + "</p>"; }).join("") +

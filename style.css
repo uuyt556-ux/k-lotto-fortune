@@ -1055,7 +1055,12 @@ body.vip-theme .topbar .acct { border-color: rgba(201, 151, 44, .6); background:
 }
 .ny-tip b { color: var(--cheongja); font-size: 10px; letter-spacing: .3px; margin-right: 3px; }
 
-.ny-blur { position: relative; margin-top: 6px; overflow: hidden; border-radius: 10px; }
+.ny-blur { position: relative; margin-top: 6px; overflow: hidden; border-radius: 10px; max-height: 118px; }
+.ny-doms.free { grid-template-columns: 1fr 1fr; gap: 7px; }
+.ny-doms.free .ny-dom { padding: 10px 10px 10px 11px; }
+.ny-doms.free .ny-lead { font-size: 11px; line-height: 1.55; }
+.ny-doms.free .ny-blur { max-height: 62px; }
+.ny-doms.free .ny-blur-tag { font-size: 9.5px; padding: 4px 8px; }
 .ny-blur > *:not(.ny-blur-tag) { filter: blur(4.2px); opacity: .85; user-select: none; pointer-events: none; }
 .ny-blur-tag {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
