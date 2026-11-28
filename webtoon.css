@@ -168,6 +168,27 @@
 }
 .wt-auto input { width: 14px; height: 14px; accent-color: var(--gold); }
 
+/* 다른 점사 듣기 — 카드·컷 공통 */
+.wt-extra { margin-top: 9px; }
+.wt-shuffle {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: 1px solid var(--line-gold); border-radius: 12px; padding: 9px 12px;
+  background: linear-gradient(180deg, #FFFDF7 0%, #FBF3E1 100%);
+  color: var(--gold-d); font-size: 12px; font-weight: 600; letter-spacing: .2px;
+  cursor: pointer; transition: background .18s, transform .12s, box-shadow .18s;
+}
+.wt-shuffle:hover { background: #FFF7E6; box-shadow: 0 2px 8px rgba(201, 151, 44, .16); }
+.wt-shuffle:active { transform: translateY(1px); }
+.cut-bar .wt-extra { margin-top: 8px; }
+.cut-bar .wt-shuffle { font-size: 11.5px; padding: 8px 10px; }
+
+/* 다른 점사로 바뀔 때 살짝 흔들리는 표시 */
+@keyframes wtSwapIn {
+  0% { opacity: .2; transform: translateY(5px) scale(.995); }
+  100% { opacity: 1; transform: none; }
+}
+.wt-stage.swapped .wt-bubbles { animation: wtSwapIn .5s ease both; }
+
 /* 안내(회원가입·요금제) 박스 */
 .wt-cta { margin-top: 10px; }
 .wt-cta[hidden] { display: none; }
@@ -257,6 +278,7 @@
   .wt-bubble p { font-size: 12px; }
   .wt-char { width: 84%; }
   .wt-mini { display: none; }
+  .wt-shuffle { font-size: 11px; padding: 8px 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .wt-char, .wt-char img, .wt-aura, .wt-halo { animation: none !important; }
