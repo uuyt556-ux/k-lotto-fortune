@@ -13,13 +13,19 @@
 <body>
   <iframe id="frame" src="./index.html?cap=16" title="복채로또 390x844 캡처"></iframe>
   <script>
-    /* 캡처용: 폰 화면처럼 스크롤바를 감춥니다(제품 화면에는 영향 없음) */
+    /* 캡처용 보조: 폰 화면처럼 스크롤바를 감추고, 배너 광고 자리(무료 회원 화면)를 강제로 보여 줍니다.
+       제품 파일(index.html/style.css/app.js)에는 영향이 없습니다. */
     var f = document.getElementById("frame");
     f.addEventListener("load", function () {
       try {
-        var s = f.contentDocument.createElement("style");
+        var d = f.contentDocument;
+        var s = d.createElement("style");
         s.textContent = "::-webkit-scrollbar{width:0!important;height:0!important}html{scrollbar-width:none}";
-        f.contentDocument.head.appendChild(s);
+        d.head.appendChild(s);
+        if (location.search.indexOf("ad=1") > -1) {
+          var ad = d.getElementById("adbar");
+          if (ad) ad.style.display = "block";
+        }
       } catch (e) {}
     });
   </script>
