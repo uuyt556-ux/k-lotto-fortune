@@ -3,21 +3,21 @@
    (앱을 자주 고치므로 캐시 우선 대신 네트워크를 먼저 확인하고, 끊겼을 때만 캐시를 씁니다)
    GitHub Pages 하위 경로(/k-lotto-fortune/)에서도 동작하도록 상대 경로 사용 */
 
-var CACHE = 'bokchae-lotto-v12';
+var CACHE = 'bokchae-lotto-v13';
 var SHELL = [
   './',
   './index.html',
   './manifest.json',
   './privacy.html',
-  './style.css?v=12',
-  './webtoon.css?v=12',
-  './lunar.js?v=12',
-  './saju.js?v=12',
-  './account.js?v=12',
-  './premium.js?v=12',
-  './webtoon.js?v=12',
-  './wish.js?v=12',
-  './app.js?v=12',
+  './style.css?v=13',
+  './webtoon.css?v=13',
+  './lunar.js?v=13',
+  './saju.js?v=13',
+  './account.js?v=13',
+  './premium.js?v=13',
+  './webtoon.js?v=13',
+  './wish.js?v=13',
+  './app.js?v=13',
   './assets/teller-male.webp',
   './assets/teller-female.webp',
   './icon-192.png',
