@@ -307,7 +307,7 @@
       var curName = (PLANS[prev.plan] && PLANS[prev.plan].name) || TIER_NAME[prev.tier];
       return {
         ok: false, confirmSwitch: true,
-        msg: "지금 " + curName + "을(를) 이용 중입니다.\n" + p.meta.label + " 이용권으로 바꿀까요? 남은 기간은 이어지지 않습니다."
+        msg: "지금 이용 중인 등급은 " + curName + "입니다.\n" + p.meta.label + " 이용권으로 바꾸면 남은 기간은 사라집니다. 계속할까요?"
       };
     }
 
@@ -371,12 +371,12 @@
         '받은 코드를 아래에 입력하면 바로 적용됩니다.</p>';
   }
 
-  function voucherBoxHtml(prefix, label) {
+  function voucherBoxHtml(prefix, label, placeholder) {
     var p = prefix || "top";
     return '<div class="voucher-box">' +
       '<div class="voucher-title">' + (label || "이용권 코드 등록") + '</div>' +
       '<div class="voucher-row">' +
-        '<input type="text" class="voucher-input" id="vc-' + p + '-in" placeholder="BC-P-XXXXX" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" />' +
+        '<input type="text" class="voucher-input" id="vc-' + p + '-in" placeholder="' + (placeholder || "BC-P-XXXXX") + '" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" />' +
         '<button type="button" class="voucher-btn" id="vc-' + p + '-go">적용</button>' +
       '</div>' +
       '<p class="voucher-msg" id="vc-' + p + '-msg" hidden></p>' +
@@ -569,6 +569,8 @@
   function vipCard() {
     var plan = PLANS[vipChoice];
     var isNow = tier() === "vip";
+    var cur = rawSub();
+    var forever = !!(cur && cur.tier === "vip" && !cur.expiresAt);
     return '<div class="plan plan-vip' + (isNow ? " now" : "") + '" data-plan="vip">' +
       '<div class="plan-top">' +
         '<span class="plan-name"><i aria-hidden="true">' + plan.hanja + "</i>황금 사주 패스</span>" +
@@ -582,7 +584,7 @@
       '<div class="plan-price"><b>' + won(plan.price) + '</b><small>' + plan.unit + "</small><em>" + plan.cycle + "</em></div>" +
       '<ul class="plan-feats">' + plan.features.map(function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>" +
       '<button type="button" class="btn btn-gold" data-buy="' + plan.id + '">' +
-        (isNow ? (plan.months ? "이용 기간 연장하기" : "이용 중 (평생)") : "황금 사주 패스 시작하기") + "</button>" +
+        (isNow ? (plan.months && !forever ? "이용 기간 연장하기" : "이용 중 (평생)") : "황금 사주 패스 시작하기") + "</button>" +
       "</div>";
   }
 
@@ -767,14 +769,20 @@
     }
     var u = currentUser();
     var now = new Date();
-    var end = plan.months ? addMonths(now, plan.months) : null;
+    var prev = rawSub();
+    var base = now;
+    if (prev && prev.tier !== "free" && prev.plan === plan.id && prev.expiresAt && new Date(prev.expiresAt).getTime() > now.getTime()) {
+      base = new Date(prev.expiresAt);
+    }
+    var end = plan.months ? addMonths(base, plan.months) : null;
+    var applyLabel = base.getTime() > now.getTime() ? "연장 시 적용" : "등록 시 적용";
     var body = $("#payBody");
     body.innerHTML =
       '<div class="pay-head"><span class="pay-name">' + plan.name + "</span>" +
         '<span class="pay-price"><b>' + won(plan.price) + "</b>원" + (plan.months === 12 ? " / 년" : plan.months === 1 ? " / 월" : " / 1회") + "</span></div>" +
       '<div class="kv-list">' +
         '<div class="kv"><span>이용 기간</span><b>' + plan.cycle + "</b></div>" +
-        (end ? '<div class="kv"><span>등록 시 적용</span><b>' + fmtDate(now.toISOString()) + " ~ " + fmtDate(end.toISOString()) + "</b></div>"
+        (end ? '<div class="kv"><span>' + applyLabel + '</span><b>' + fmtDate(base.toISOString()) + " ~ " + fmtDate(end.toISOString()) + "</b></div>"
              : '<div class="kv"><span>등록 시 적용</span><b>평생 (추가 결제 없음)</b></div>') +
         '<div class="kv"><span>계정</span><b>' + esc(displayName()) + " · " + esc(u.email) + "</b></div>" +
       "</div>" +

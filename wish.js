@@ -437,7 +437,7 @@
         "<div class=\"kv\"><span>이용 기간</span><b>3일 성취 기원 · 저장 후 계속 소장</b></div>" +
       "</div>" +
       M.bankBox(PRICE) +
-      M.voucherBox("wish", "입금 확인 후 받은 이용권 코드") +
+      M.voucherBox("wish", "입금 확인 후 받은 이용권 코드", "BC-W-XXXXX") +
       '<p class="tiny" style="text-align:left;margin-top:10px">' +
         "<b>디지털 콘텐츠 고지</b> — 결제 즉시 이미지가 제공되는 디지털 콘텐츠입니다. 제공이 시작된 뒤에는 청약철회(전액 환불)가 제한될 수 있습니다(전자상거래법 제17조 제2항). " +
         "이용권은 등록한 기기에서만 유효하며, 등록 1건에 카드 1장이 열립니다." +

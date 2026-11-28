@@ -799,15 +799,15 @@ select:disabled { opacity: .55; }
 }
 .bank-row { display: flex; align-items: center; gap: 8px; padding: 7px 11px; font-size: 11.5px; border-bottom: 1px dashed rgba(201, 151, 44, .22); }
 .bank-row:last-child { border-bottom: 0; }
-.bank-row > span { flex: 0 0 58px; color: var(--meok-3); font-size: 11px; }
+.bank-row > span { flex: 0 0 52px; color: var(--meok-3); font-size: 11px; }
 .bank-row > b { color: var(--meok); font-size: 12.5px; }
-.bank-row .bank-acc { font-family: var(--serif); font-size: 15px; letter-spacing: .6px; color: var(--meok); }
+.bank-row .bank-acc { font-family: var(--serif); font-size: 14px; letter-spacing: .2px; color: var(--meok); white-space: nowrap; }
 .bank-row.bank-amount { background: rgba(201, 151, 44, .07); }
 .bank-row.bank-amount > b { font-family: var(--serif); font-size: 17px; color: var(--juhong); }
 .bank-copy {
-  margin-left: auto; flex: 0 0 auto; font-family: inherit; font-size: 10.5px; font-weight: 600;
+  margin-left: auto; flex: 0 0 auto; font-family: inherit; font-size: 10px; font-weight: 600;
   color: #4A3600; background: linear-gradient(150deg, #F3DFA8, #DDB664);
-  border: 1px solid rgba(160, 118, 30, .45); border-radius: 999px; padding: 4px 10px;
+  border: 1px solid rgba(160, 118, 30, .45); border-radius: 999px; padding: 4px 8px;
   cursor: pointer; white-space: nowrap;
 }
 .bank-copy:active { transform: translateY(1px); }
