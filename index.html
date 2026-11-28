@@ -17,10 +17,93 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=11" />
-<link rel="stylesheet" href="webtoon.css?v=11" />
+<link rel="stylesheet" href="style.css?v=12" />
+<link rel="stylesheet" href="webtoon.css?v=12" />
+<style>
+/* 인트로 스플래시 — 외부 CSS를 기다리지 않고 첫 페인트부터 화면을 덮도록 하는 최소 스타일 */
+html.splashing { background-color: #100E0C; }
+html.splashing, html.splashing body { overflow: hidden; }
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: grid; place-items: center; overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% 6%, #2A2318 0%, rgba(42, 35, 24, 0) 60%),
+    radial-gradient(100% 62% at 50% 104%, #1B1712 0%, rgba(27, 23, 18, 0) 72%),
+    linear-gradient(180deg, #100E0C 0%, #171310 54%, #0B0A08 100%);
+  color: #FBF7EE;
+}
+#splash.is-out { opacity: 0; visibility: hidden; }
+#splash .sp-seal,
+#splash .sp-title,
+#splash .sp-rule,
+#splash .sp-sub,
+#splash .sp-hint { opacity: 0; }
+</style>
 </head>
 <body>
+
+<!-- ───── 인트로 스플래시 ───── -->
+<div id="splash" class="splash" aria-hidden="true">
+  <div class="sp-bg">
+    <div class="sp-grain"></div>
+    <div class="sp-moon"></div>
+    <div class="sp-ring"></div>
+    <div class="sp-sparks">
+      <i style="--x:8%;--s:3px;--t:9.5s;--d:0s"></i>
+      <i style="--x:17%;--s:2px;--t:12s;--d:2.4s"></i>
+      <i style="--x:27%;--s:2.5px;--t:10.5s;--d:5.1s"></i>
+      <i style="--x:39%;--s:2px;--t:13.5s;--d:1.2s"></i>
+      <i style="--x:47%;--s:3.5px;--t:8.6s;--d:3.8s"></i>
+      <i style="--x:56%;--s:2px;--t:11.4s;--d:6.4s"></i>
+      <i style="--x:64%;--s:2.5px;--t:9s;--d:2s"></i>
+      <i style="--x:72%;--s:3px;--t:12.6s;--d:4.6s"></i>
+      <i style="--x:81%;--s:2px;--t:10s;--d:7.2s"></i>
+      <i style="--x:89%;--s:3px;--t:13s;--d:1.8s"></i>
+      <i style="--x:22%;--s:2px;--t:14s;--d:8.4s"></i>
+      <i style="--x:93%;--s:2px;--t:11s;--d:5.7s"></i>
+    </div>
+    <div class="sp-frame"><b></b><b></b><b></b><b></b></div>
+  </div>
+  <div class="sp-core">
+    <div class="sp-seal">運<small>命</small></div>
+    <div class="sp-title">복채로또</div>
+    <div class="sp-rule"><i></i><span>福</span><i></i></div>
+    <p class="sp-sub">사주 · 2027 신년 재물운 번호</p>
+    <p class="sp-hint">화면을 누르면 바로 시작합니다</p>
+  </div>
+</div>
+<script>
+/* 인트로 스플래시 제어 — 제목이 다 떠오른 뒤(1.9초) 부드럽게 걷히고, 탭하면 바로 건너뜁니다. */
+(function () {
+  var el = document.getElementById('splash');
+  if (!el) return;
+  var root = document.documentElement;
+  root.classList.add('splashing');
+  var done = false;
+
+  function hide() {
+    if (done) return;
+    done = true;
+    el.classList.add('is-out');
+    root.classList.remove('splashing');
+    setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+      root.classList.add('splash-done');
+    }, 700);
+  }
+
+  // 제목·부제가 떠오르는 시간을 기다렸다가 자연스럽게 전환
+  setTimeout(hide, 1900);
+  // 탭 · 클릭 · 키 입력으로 즉시 건너뛰기
+  el.addEventListener('click', hide);
+  el.addEventListener('touchstart', hide, { passive: true });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown') hide();
+  });
+  // 뒤로 가기 복원(bFCache) 시에는 스플래시를 다시 보여 주지 않습니다.
+  window.addEventListener('pageshow', function (e) { if (e.persisted) hide(); });
+})();
+</script>
 
 <div class="wrap">
   <header class="topbar">
@@ -505,12 +588,12 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lunar.js?v=11"></script>
-<script src="saju.js?v=11"></script>
-<script src="account.js?v=11"></script>
-<script src="premium.js?v=11"></script>
-<script src="webtoon.js?v=11"></script>
-<script src="wish.js?v=11"></script>
-<script src="app.js?v=11"></script>
+<script src="lunar.js?v=12"></script>
+<script src="saju.js?v=12"></script>
+<script src="account.js?v=12"></script>
+<script src="premium.js?v=12"></script>
+<script src="webtoon.js?v=12"></script>
+<script src="wish.js?v=12"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>
