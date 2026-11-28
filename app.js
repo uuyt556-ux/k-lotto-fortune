@@ -98,6 +98,130 @@
     } catch (e) { return fallback; }
   }
 
+  /* ───── 카테고리(탭) 화면 전환 ─────
+     하단 내비 5개 화면과, 각 화면 안의 카테고리 칩을 show/hide로 전환합니다.
+     다른 스크립트가 쓰는 scrollIntoView도 가로채서, 숨겨진 화면의 요소로 이동할 때
+     그 화면과 카테고리를 먼저 열어 준 뒤 스크롤합니다. */
+  var PANEL_IDS = { today: 1, saju: 1, numbers: 1, saved: 1, membership: 1 };
+  var TABS = {};   /* group -> { key, view } */
+
+  function syncNavUI(name) {
+    $$(".nav a").forEach(function (a) {
+      var on = a.getAttribute("data-target") === name;
+      a.classList.toggle("on", on);
+      if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+  }
+
+  function showPanel(name, opts) {
+    if (!PANEL_IDS[name]) return false;
+    var found = false;
+    $$("main > .panel").forEach(function (p) {
+      var on = p.getAttribute("data-panel") === name;
+      p.hidden = !on;
+      if (on) found = true;
+    });
+    if (!found) return false;
+    syncNavUI(name);
+    document.documentElement.setAttribute("data-view", name);
+    if (!opts || opts.scroll !== false) {
+      window.scrollTo({ top: 0, behavior: (opts && opts.smooth) ? "smooth" : "auto" });
+    }
+    return true;
+  }
+
+  /* group 안에서 key(카테고리)와 view(세부 보기)를 화면에 반영합니다. */
+  function setTab(group, key, view, opts) {
+    var st = TABS[group] || (TABS[group] = { key: null, view: null });
+    view = view || (key === st.key ? st.view : null) || null;
+    if (key === "year") view = view || "total";
+    st.key = key;
+    if (view) st.view = view;
+
+    var bar = $('[data-tabgroup="' + group + '"]');
+    if (bar) {
+      $$("[data-tab]", bar).forEach(function (b) {
+        var bv = b.getAttribute("data-view");
+        var on = b.getAttribute("data-tab") === key && (!bv || bv === view);
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+    }
+    $$("[data-tabpane]").forEach(function (p) {
+      var ref = String(p.getAttribute("data-tabpane")).split(":");
+      if (ref[0] !== group) return;
+      p.hidden = ref[1] !== key;
+    });
+
+    if (group === "saju" && key === "year" && window.Premium && window.Premium.setView) {
+      window.Premium.setView(view || "total");
+    }
+    if (!opts || opts.scroll !== false) window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  /* 요소가 숨은 화면·카테고리에 있으면 먼저 열어 줍니다. */
+  function reveal(el) {
+    if (!el || el.nodeType !== 1) return;
+    var node = el, pane = null, panel = null, guard = 0;
+    while (node && node.nodeType === 1 && guard++ < 24) {
+      if (!pane && node.hasAttribute("data-tabpane")) pane = node;
+      if (!panel && node.hasAttribute("data-panel")) panel = node;
+      node = node.parentElement;
+    }
+    if (pane) {
+      var ref = String(pane.getAttribute("data-tabpane")).split(":");
+      var view = pane.getAttribute("data-tabview") || null;
+      if (ref[1] === "year" && !view) view = (TABS.saju && TABS.saju.view) || "total";
+      setTab(ref[0], ref[1], view, { scroll: false });
+    }
+    if (panel) showPanel(panel.getAttribute("data-panel"), { scroll: false });
+  }
+
+  /* 기존 코드의 el.scrollIntoView(...) 호출을 그대로 살리면서 화면도 함께 전환 */
+  var nativeScrollIntoView = Element.prototype.scrollIntoView;
+  if (nativeScrollIntoView) {
+    Element.prototype.scrollIntoView = function (arg) {
+      try { reveal(this); } catch (e) { /* 무시 */ }
+      return nativeScrollIntoView.call(this, arg);
+    };
+  }
+
+  function goHash() {
+    var id = String(location.hash || "").replace(/^#/, "");
+    if (!id) return false;
+    var el = document.getElementById(id);
+    if (!el) return false;
+    reveal(el);
+    el.scrollIntoView({ behavior: "auto", block: "start" });
+    return true;
+  }
+
+  function bindNav() {
+    $$(".nav a").forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var name = a.getAttribute("data-target");
+        showPanel(name, { smooth: false });
+        if (history.replaceState) history.replaceState(null, "", a.getAttribute("href") || ("#" + name));
+      });
+    });
+    $$("[data-tabgroup]").forEach(function (bar) {
+      var group = bar.getAttribute("data-tabgroup");
+      $$("[data-tab]", bar).forEach(function (b) {
+        b.addEventListener("click", function () {
+          setTab(group, b.getAttribute("data-tab"), b.getAttribute("data-view") || null, { scroll: false });
+          var panel = bar.parentElement;
+          if (panel && panel.classList.contains("panel")) {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+        });
+      });
+    });
+    var top = $('.foot a[href="#today"]');
+    if (top) top.addEventListener("click", function (e) { e.preventDefault(); showPanel("today"); });
+    window.addEventListener("hashchange", goHash);
+  }
+
   /* ───── 오늘의 기운 ───── */
   function renderToday() {
     var now = new Date();
@@ -695,24 +819,7 @@
       try { sessionStorage.setItem(LS.adbar, "1"); } catch (e) {}
     });
 
-    /* 하단 내비 현재 위치 표시 */
-    var sectionMap = {
-      today: "today", saju: "saju", annual: "saju", numbers: "numbers", saved: "saved",
-      weekly: "numbers", wish: "numbers",
-      tencombos: "membership", deep: "membership", calendar: "membership", lucky: "membership", membership: "membership"
-    };
-    var links = $$(".nav a");
-    if ("IntersectionObserver" in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting) {
-            var tgt = sectionMap[en.target.id];
-            links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("data-target") === tgt); });
-          }
-        });
-      }, { rootMargin: "-30% 0px -55% 0px" });
-      Object.keys(sectionMap).forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
-    }
+    bindNav();
   }
 
   function loadData() {
@@ -791,6 +898,10 @@
     renderLatest();
     renderNumbers();
     bind();
+
+    /* 첫 화면: 주소에 섹션 해시가 있으면 그 화면을, 없으면 오늘의 기운 */
+    showPanel("today", { scroll: false });
+    if (location.hash) goHash();
 
     try {
       if (sessionStorage.getItem(LS.adbar) === "1") $("#adbar").style.display = "none";

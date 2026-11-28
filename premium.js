@@ -21,7 +21,7 @@
   var EL_SHORT = { 목: "성장과 시작", 화: "열정과 표현", 토: "안정과 축적", 금: "결단과 마무리", 수: "지혜와 흐름" };
 
   var TODAY = new Date();
-  var state = { fixed: [], excluded: [], round: 0, err: "" };
+  var state = { fixed: [], excluded: [], round: 0, err: "", view: "total", domain: null, month: null };
 
   function $(s, root) { return (root || document).querySelector(s); }
   function $$(s, root) { return Array.prototype.slice.call((root || document).querySelectorAll(s)); }
@@ -461,73 +461,132 @@
   }
   function toneCls(s) { return s >= 76 ? "hot" : s >= 66 ? "mid" : "low"; }
 
-  function annualDomains(A, full) {
-    return '<div class="ny-doms' + (full ? "" : " free") + '">' + A.domains.map(function (d) {
-      var body = full
-        ? '<div class="ny-dom-body"><p class="ny-lead">' + d.lead + "</p>" +
-            d.lines.map(function (l) { return "<p>" + l + "</p>"; }).join("") +
-            '<p class="ny-tip"><b>실천</b> ' + d.tip + "</p></div>"
-        : '<p class="ny-lead">' + firstSentence(d.lead) + "</p>" +
-            blurBlock("<p>" + d.lines[0] + "</p><p>" + d.lines[1] + '</p><p class="ny-tip"><b>실천</b> ' + d.tip + "</p>", "복채 패스에서 계속");
-      return '<div class="ny-dom ' + toneCls(d.score) + '">' +
-        '<div class="ny-dom-head"><span class="ny-ico">' + d.icon + "</span><b>" + d.title + "</b>" +
-          '<span class="ny-num">' + (full ? d.score : "?") + "</span></div>" +
-        '<div class="ny-bar"><i style="width:' + d.score + '%"></i></div>' +
-        body +
-        "</div>";
-    }).join("") + "</div>";
+  var DOM_LABEL = { money: "금전", work: "사업·일", health: "건강", love: "연애·가족" };
+
+  function currentDomain(A) {
+    if (state.domain) {
+      for (var i = 0; i < A.domains.length; i++) {
+        if (A.domains[i].key === state.domain) return A.domains[i];
+      }
+    }
+    return A.domains[0];
   }
 
-  function annualCaution(A, full) {
-    var worst = A.caution[0];
-    var head = '<div class="ny-sec-h">⚠️ 2027년, 유독 조심해야 할 달' +
-      (full ? '<span>' + A.caution.slice().sort(function (x, y) { return x.m - y.m; }).map(function (c) { return c.m + "월"; }).join(" · ") + "</span>" : "") + "</div>";
-
-    if (!full) {
-      return head +
-        '<div class="ny-caut hero">' +
-          '<div class="ny-caut-head"><span class="ny-cm">⚠️ ' + worst.m + "월</span>" +
-            '<span class="ny-cg">' + worst.ganzi + "월 · " + worst.note.split(" · ")[1] + '</span></div>' +
-          '<p class="ny-caut-headline">2027년 ' + worst.m + "월, " + worst.headline.slice(worst.headline.indexOf(",") + 1).trim() + "</p>" +
-          '<p class="ny-tease">사주 일지와 세운을 대조했을 때, 올해 이 달이 가장 크게 흔들립니다. 이유를 알고 피해 가는 것만으로 결과가 달라집니다.</p>' +
-          blurBlock(
-            '<ul class="ny-why">' + worst.reasons.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul>" +
-            '<div class="ny-rx"><b>피하는 처방</b><ul>' + worst.rx.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></div>", "이유·처방은 복채 패스에서"
-          ) +
-        "</div>" +
-        '<div class="ny-more-locked">' +
-          '<b>나머지 주의할 달 ' + A.caution.slice(1).sort(function (x, y) { return x.m - y.m; }).map(function (c) { return c.m + "월"; }).join(" · ") + "</b>" +
-          blurBlock('<div class="ny-caut-mini">' + A.caution.slice(1).map(function (c) {
-            return '<p><b>' + c.m + "월</b> " + c.headline + "</p>";
-          }).join("") + "</div>", "나머지 주의할 달 열기") +
-        "</div>";
-    }
-
-    return head +
-      '<div class="ny-caut-list">' + A.caution.map(function (c, i) {
-        return '<div class="ny-caut">' +
-          '<div class="ny-caut-head"><span class="ny-cm">' + (i === 0 ? "⚠️ " : "") + c.m + "월</span>" +
-            '<span class="ny-cg">' + c.ganzi + "월 · " + c.note.split(" · ")[1] + '</span>' +
-            '<span class="ny-cs">' + c.score + "</span></div>" +
-          '<p class="ny-caut-headline">' + c.headline + "</p>" +
-          '<ul class="ny-why">' + c.reasons.map(function (r) { return "<li>" + r + "</li>"; }).join("") +
-            (c.pair ? '<li class="ny-pair">' + c.pair + "</li>" : "") + "</ul>" +
-          '<div class="ny-rx"><b>피하는 처방</b><ul>' + c.rx.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></div>" +
-          "</div>";
+  function domainChips(A, full) {
+    var cur = currentDomain(A).key;
+    return '<div class="ny-chips wrap" role="tablist" aria-label="분야별 운세 선택">' +
+      A.domains.map(function (d) {
+        var on = d.key === cur;
+        return '<button type="button" role="tab" aria-selected="' + (on ? "true" : "false") + '" class="ny-chip' + (on ? " on " + toneCls(d.score) : "") + '" data-domain="' + d.key + '">' +
+          '<span aria-hidden="true">' + d.icon + "</span>" + (DOM_LABEL[d.key] || d.title) +
+          '<b class="ny-chip-sc">' + (full ? d.score : "?") + "</b></button>";
       }).join("") + "</div>";
   }
 
-  function annualGood(A, full) {
-    var inner = '<div class="ny-good">' + A.good.map(function (g) {
-      return '<div class="ny-good-it"><span class="ny-gm">' + g.m + "월</span>" +
-        '<b>' + g.reason + "</b><p>" + g.use + "</p>" +
-        '<span class="ny-gs">' + g.score + "</span></div>";
-    }).join("") + "</div>";
-    return '<div class="ny-sec-h">🍀 기운이 좋은 달</div>' + (full ? inner : blurBlock(inner, "길한 달 2곳 열기"));
+  function domainCard(d, full) {
+    var body = full
+      ? '<div class="ny-dom-body"><p class="ny-lead">' + d.lead + "</p>" +
+          d.lines.map(function (l) { return "<p>" + l + "</p>"; }).join("") +
+          '<p class="ny-tip"><b>실천</b> ' + d.tip + "</p></div>"
+      : '<p class="ny-lead">' + firstSentence(d.lead) + "</p>" +
+          blurBlock("<p>" + d.lines[0] + "</p><p>" + d.lines[1] + '</p><p class="ny-tip"><b>실천</b> ' + d.tip + "</p>", "복채 패스에서 계속");
+    return '<div class="ny-dom solo ' + toneCls(d.score) + '">' +
+      '<div class="ny-dom-head"><span class="ny-ico">' + d.icon + "</span><b>" + d.title + "</b>" +
+        '<span class="ny-num">' + (full ? d.score : "?") + "</span></div>" +
+      '<div class="ny-bar"><i style="width:' + d.score + '%"></i></div>' +
+      body +
+      "</div>";
+  }
+
+  function currentMonth(A) {
+    var m = state.month;
+    if (m) {
+      for (var i = 0; i < A.caution.length; i++) if (A.caution[i].m === m) return { c: A.caution[i] };
+      for (var j = 0; j < A.good.length; j++) if (A.good[j].m === m) return { g: A.good[j] };
+    }
+    return { c: A.caution[0] };
+  }
+
+  function monthChips(A) {
+    var pick = currentMonth(A);
+    var cur = pick.g ? pick.g.m : pick.c.m;
+    var out = '<div class="ny-chips wrap" role="tablist" aria-label="주의할 달·길한 달 선택">';
+    A.caution.slice().sort(function (x, y) { return x.m - y.m; }).forEach(function (c) {
+      var on = c.m === cur && !pick.g;
+      out += '<button type="button" role="tab" aria-selected="' + (on ? "true" : "false") + '" class="ny-chip warn' + (on ? " on" : "") + '" data-month="' + c.m + '">⚠ ' + c.m + '월<b class="ny-chip-sc">' + c.score + "</b></button>";
+    });
+    A.good.slice().sort(function (x, y) { return x.m - y.m; }).forEach(function (g) {
+      var on = pick.g && g.m === cur;
+      out += '<button type="button" role="tab" aria-selected="' + (on ? "true" : "false") + '" class="ny-chip good' + (on ? " on" : "") + '" data-month="' + g.m + '">🍀 ' + g.m + '월<b class="ny-chip-sc">' + g.score + "</b></button>";
+    });
+    return out + "</div>";
+  }
+
+  function warnLine(A) {
+    var worst = A.caution[0];
+    var list = A.caution.slice().sort(function (x, y) { return x.m - y.m; }).map(function (c) { return c.m + "월"; }).join(" · ");
+    var tail = String(worst.headline || "").replace(worst.m + "월, ", "");
+    return '<p class="ny-warnline"><b>⚠ ' + list + "</b>은 크게 흔들리는 달입니다. 특히 <b>" + worst.m + "월</b> — " + tail + "</p>";
+  }
+
+  function cautionCard(c, full) {
+    var head = '<div class="ny-caut-head"><span class="ny-cm">⚠️ ' + c.m + "월</span>" +
+      '<span class="ny-cg">' + c.ganzi + "월 · " + c.note.split(" · ")[1] + "</span>";
+    var body;
+    if (full) {
+      body = '<div class="ny-caut-head"><span class="ny-cm">⚠️ ' + c.m + "월</span>" +
+        '<span class="ny-cg">' + c.ganzi + "월 · " + c.note.split(" · ")[1] + '</span>' +
+        '<span class="ny-cs">' + c.score + "</span></div>" +
+        '<p class="ny-caut-headline">' + c.headline + "</p>" +
+        '<ul class="ny-why">' + c.reasons.map(function (r) { return "<li>" + r + "</li>"; }).join("") +
+          (c.pair ? '<li class="ny-pair">' + c.pair + "</li>" : "") + "</ul>" +
+        '<div class="ny-rx"><b>피하는 처방</b><ul>' + c.rx.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></div>";
+    } else {
+      body = head + "</div>" +
+        '<p class="ny-caut-headline">' + c.headline + "</p>" +
+        '<p class="ny-tease">사주 일지와 세운을 대조했을 때 이 달이 크게 흔들립니다. 이유를 알고 피해 가는 것만으로 결과가 달라집니다.</p>' +
+        blurBlock(
+          '<ul class="ny-why">' + c.reasons.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul>" +
+          '<div class="ny-rx"><b>피하는 처방</b><ul>' + c.rx.map(function (r) { return "<li>" + r + "</li>"; }).join("") + "</ul></div>",
+          "이유·처방은 복채 패스에서"
+        );
+    }
+    return '<div class="ny-caut hero">' + body + "</div>";
+  }
+
+  function goodCard(g, full) {
+    var inner = '<div class="ny-good-it"><span class="ny-gm">🍀 ' + g.m + "월</span>" +
+      "<b>" + g.reason + "</b><p>" + g.use + '</p><span class="ny-gs">' + g.score + "</span></div>";
+    return full ? inner : blurBlock(inner, "길한 달 풀이는 복채 패스에서");
+  }
+
+  function miniCta(line) {
+    return '<div class="ny-mini-cta"><p>' + line + "</p>" +
+      '<button type="button" class="btn btn-gold" data-ny-pay="monthly">복채 패스 6,900원으로 전체 열기</button>' +
+      '<p class="tiny">베타 테스트 결제 모드 · 실제 청구는 없습니다</p></div>';
+  }
+
+  function annualHero(A) {
+    return '<div class="ny-hero">' +
+        '<div class="ny-year"><span class="ny-hanja">' + A.yg.hanja + "</span>" +
+          '<span class="ny-yr">' + A.year + "년 " + A.yg.name + "년 · " + H[A.yg.stemEl] + "·" + H[A.yg.branchEl] + "의 해</span>" +
+          '<span class="ny-me">일간 ' + A.meName + " " + A.meH + " · " + (A.strong ? "신강" : "신약") + " · 용신 " + H[A.yong] + "</span>" +
+        "</div>" +
+        '<div class="ny-total ' + toneCls(A.score) + '"><b>' + A.score + "</b><span>종합</span></div>" +
+      "</div>" +
+      '<div class="ny-grade"><b>' + A.grade.t + "</b> <small>" + A.grade.d + "</small></div>" +
+      '<div class="ny-kw">' + A.keywords.map(function (k, i) {
+        return '<span class="ny-kw-it' + (i === 0 ? " on" : "") + '">' + k + "</span>";
+      }).join("") + "</div>" +
+      '<div class="ny-sum">' +
+        "<p>" + A.summary.year + "</p>" +
+        "<p>" + A.summary.strength + "</p>" +
+        "<p>" + A.summary.yong + "</p>" +
+      "</div>";
   }
 
   function annualGrid(A) {
-    return '<div class="ny-sec-h">2027년 12개월 기운 지도<span>진한 색일수록 힘이 붙는 달</span></div>' +
+    return '<div class="ny-sec-h" style="margin-top:14px">2027년 12개월 기운 지도<span>진한 색일수록 힘이 붙는 달</span></div>' +
       '<div class="ny-grid">' + A.months.map(function (m) {
         return '<div class="ny-cell ' + toneCls(m.score) + '"><b>' + m.m + "</b><span>" + m.score + "</span></div>";
       }).join("") + "</div>" +
@@ -554,6 +613,8 @@
       "</div>";
   }
 
+  var VIEW_TITLE = { total: "2027 신년 총운세", domains: "2027 분야별 운세", months: "2027 주의할 달 · 길한 달" };
+
   function renderAnnual() {
     var box = $("#annualBody");
     if (!box) return;
@@ -567,39 +628,25 @@
     var t = tellerOf();
     var A = S.annual(global.Unmyeong.birth().pillars, t.name === "하윤" ? "female" : "male", 2027);
     var full = !!(M && M.has("newYear"));
+    var view = state.view || "total";
+    var h2 = $("#annual-title");
+    if (h2) h2.textContent = VIEW_TITLE[view] || VIEW_TITLE.total;
 
-    var hero =
-      '<div class="ny-hero">' +
-        '<div class="ny-year"><span class="ny-hanja">' + A.yg.hanja + "</span>" +
-          '<span class="ny-yr">' + A.year + "년 " + A.yg.name + "년 · " + H[A.yg.stemEl] + "·" + H[A.yg.branchEl] + "의 해</span>" +
-          '<span class="ny-me">일간 ' + A.meName + " " + A.meH + " · " + (A.strong ? "신강" : "신약") + " · 용신 " + H[A.yong] + "</span>" +
-        "</div>" +
-        '<div class="ny-total ' + toneCls(A.score) + '"><b>' + A.score + "</b><span>종합</span></div>" +
-      "</div>" +
-      '<div class="ny-grade"><b>' + A.grade.t + "</b> <small>" + A.grade.d + "</small></div>" +
-      '<div class="ny-kw">' + A.keywords.map(function (k, i) {
-        return '<span class="ny-kw-it' + (i === 0 ? " on" : "") + '">' + k + "</span>";
-      }).join("") + "</div>" +
-      '<div class="ny-sum">' +
-        "<p>" + A.summary.year + "</p>" +
-        "<p>" + A.summary.strength + "</p>" +
-        "<p>" + A.summary.yong + "</p>" +
-      "</div>";
+    if (view === "domains") {
+      box.innerHTML = '<div class="ny-sec-h" style="margin-top:0">분야별 운세 4<span>' + (full ? "전체 공개" : "미리보기") + "</span></div>" +
+        domainChips(A, full) + domainCard(currentDomain(A), full) +
+        (full ? "" : miniCta("나머지 운의 근거·실천법과 12개월 흐름까지 함께 열립니다."));
+    } else if (view === "months") {
+      var pick = currentMonth(A);
+      box.innerHTML = warnLine(A) + monthChips(A) +
+        (pick.g ? goodCard(pick.g, full) : cautionCard(pick.c, full)) +
+        (full ? "" : annualHook(A)) +
+        '<p class="tiny">월별 점수는 세운·월지·일지의 합충과 용신·기신 관계를 합산한 참고치입니다.</p>';
+    } else {
+      box.innerHTML = annualHero(A) + annualGrid(A) +
+        (full ? "" : miniCta("4대 운세·주의할 달·길한 달 전체 풀이는 복채 패스에서 열립니다."));
+    }
 
-    box.innerHTML = hero +
-      '<div class="ny-sec-h">분야별 운세 4<span>' + (full ? "전체 공개" : "복채 패스에서 전체 공개") + "</span></div>" +
-      annualDomains(A, full) +
-      annualCaution(A, full) +
-      annualGood(A, full) +
-      (full ? "" : annualHook(A)) +
-      annualGrid(A) +
-      '<p class="tiny">2027 정미년 세운과 절기 월지, 사주의 용신·기신·합충을 대조한 간이 풀이입니다. 같은 사주라도 태어난 시각과 대운에 따라 달라질 수 있으니 재미와 참고로만 봐 주세요.</p>';
-
-    $$("[data-ny-pay]", box).forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        M.openPay(btn.getAttribute("data-ny-pay"));
-      });
-    });
     bindCommon(box);
   }
 
@@ -616,6 +663,24 @@
         }
       });
     });
+    /* 년간 총운세 안의 결제 유도 버튼 */
+    $$("[data-ny-pay]", root).forEach(function (b) {
+      b.addEventListener("click", function () { M.openPay(b.getAttribute("data-ny-pay")); });
+    });
+    /* 분야별 운세 칩 — 한 번에 한 분야만 펼칩니다 */
+    $$("[data-domain]", root).forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.domain = b.getAttribute("data-domain");
+        renderAnnual();
+      });
+    });
+    /* 주의할 달 · 길한 달 칩 — 고른 달 한 장만 보여 줍니다 */
+    $$("[data-month]", root).forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.month = parseInt(b.getAttribute("data-month"), 10);
+        renderAnnual();
+      });
+    });
   }
 
   function render() {
@@ -629,7 +694,15 @@
     renderLucky();
   }
 
-  global.Premium = { render: render, ohaeng: ohaeng };
+  global.Premium = {
+    render: render,
+    /* 사주 화면의 카테고리 칩(총운 / 4대 운세 / 주의할 달)이 호출합니다. */
+    setView: function (v) {
+      state.view = v || "total";
+      renderAnnual();
+    },
+    ohaeng: ohaeng
+  };
 
   document.addEventListener("unmyeong:tier", function () {
     state.round = 0;

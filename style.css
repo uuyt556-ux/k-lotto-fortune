@@ -1160,3 +1160,111 @@ body.vip-theme .topbar .acct { border-color: rgba(201, 151, 44, .6); background:
   .ny-good { grid-template-columns: 1fr 1fr; }
   .ny-grid { grid-template-columns: repeat(12, 1fr); }
 }
+
+/* ═════════════════════════════════════════
+   v15 — 카테고리 탭형 화면(패널) · 세로 길이 압축
+   ═════════════════════════════════════════ */
+[hidden] { display: none !important; }
+
+/* 화면(패널) — 하단 내비 5개 */
+.panel { animation: panelIn .22s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 화면 안의 카테고리 칩 — 스크롤해도 위에 붙어 있습니다 */
+.catbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 3px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  margin: -2px 0 12px; padding: 6px 5px;
+  background: rgba(251, 247, 238, .93);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--line-gold); border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(60, 45, 20, .07);
+}
+.catbar::-webkit-scrollbar { display: none; }
+.catbar button {
+  flex: 0 0 auto; border: 0; background: transparent; cursor: pointer;
+  padding: 8px 10px; border-radius: 9px; white-space: nowrap;
+  font-size: 12.5px; letter-spacing: -.2px; color: var(--meok-2);
+  transition: background .18s, color .18s, box-shadow .18s;
+}
+.catbar button.on {
+  background: linear-gradient(160deg, #FFFDF7, #FBF1DA);
+  color: var(--meok); font-weight: 700;
+  box-shadow: 0 1px 5px rgba(60, 45, 20, .14), inset 0 0 0 1px rgba(201, 151, 44, .22);
+}
+.catbar button:active { transform: scale(.97); }
+
+.tabpane { animation: paneIn .2s ease both; }
+@keyframes paneIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 2027 총운세 — 분야별 / 주의할 달 선택 칩 */
+.ny-chips {
+  display: flex; align-items: center; gap: 5px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  padding: 2px 1px 8px; margin: 0 0 6px;
+}
+.ny-chips::-webkit-scrollbar { display: none; }
+.ny-chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--line); background: #FFFDF7; color: var(--meok-2);
+  border-radius: 999px; padding: 7px 11px; cursor: pointer;
+  font-size: 12px; letter-spacing: -.2px; transition: background .16s, border-color .16s, color .16s;
+}
+.ny-chip-sc {
+  font-family: var(--serif); font-size: 12px; font-weight: 700; color: var(--gold-d);
+  min-width: 14px; text-align: center;
+}
+.ny-chip.on {
+  border-color: var(--gold); color: var(--meok); font-weight: 700;
+  background: linear-gradient(160deg, #FFF8E4, #F6E3B4);
+  box-shadow: 0 2px 7px rgba(201, 151, 44, .18);
+}
+.ny-chip.warn { color: #9A4232; border-color: rgba(184, 59, 42, .22); background: rgba(184, 59, 42, .04); }
+.ny-chip.warn.on { color: #7E2A1E; border-color: rgba(184, 59, 42, .55); background: linear-gradient(160deg, #FDEDE8, #F7D8CE); box-shadow: 0 2px 7px rgba(184, 59, 42, .14); }
+.ny-chip.warn .ny-chip-sc { color: var(--juhong); }
+.ny-chip.good.on { border-color: rgba(43, 110, 108, .5); background: linear-gradient(160deg, #EFF7F5, #D8EDE9); box-shadow: 0 2px 7px rgba(43, 110, 108, .13); }
+.ny-chip.good .ny-chip-sc { color: var(--cheongja); }
+.ny-chip-lb {
+  flex: 0 0 auto; font-size: 10px; letter-spacing: .3px; color: var(--meok-3);
+  padding: 0 2px 0 4px;
+}
+.ny-chip-lb.good { padding-left: 8px; }
+
+/* 한 분야 / 한 달만 펼친 카드 */
+.ny-dom.solo { padding: 13px 14px; }
+.ny-dom.solo .ny-lead { font-size: 12.8px; }
+.ny-dom.solo .ny-blur { max-height: 104px; }
+
+/* 주의할 달 한 줄 경고 */
+.ny-warnline {
+  margin: 0 0 9px; padding: 8px 11px; border-radius: 10px;
+  background: rgba(184, 59, 42, .06); border: 1px solid rgba(184, 59, 42, .18);
+  font-size: 11.5px; line-height: 1.62; color: #7E3A2C;
+}
+.ny-warnline b { color: var(--juhong); }
+
+/* 무료 회원용 짧은 결제 유도 */
+.ny-mini-cta {
+  margin-top: 13px; padding: 12px 13px; border-radius: 13px; text-align: center;
+  background: linear-gradient(160deg, #FFF8E4, #F7EAD0);
+  border: 1px dashed rgba(201, 151, 44, .55);
+}
+.ny-mini-cta p { margin: 0 0 9px; font-size: 11.5px; line-height: 1.6; color: var(--meok-2); }
+.ny-mini-cta .tiny { margin: 8px 0 0; }
+
+/* 좁은 화면에서 카테고리 칩 글자를 살짝 줄입니다 */
+@media (max-width: 360px) {
+  .catbar button { font-size: 11.5px; padding: 7px 9px; }
+  .ny-chip { font-size: 11.5px; padding: 6px 10px; }
+}
+.ny-chips.wrap { flex-wrap: wrap; overflow: visible; row-gap: 6px; }
+.ny-chips.wrap .ny-chip { flex: 0 0 auto; }
+.ny-chips.wrap { gap: 4px; }
+.ny-chips.wrap .ny-chip { padding: 6px 9px; font-size: 11.5px; }
