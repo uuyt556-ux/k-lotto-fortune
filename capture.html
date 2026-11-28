@@ -22,7 +22,12 @@
         if (sp) sp.click();
         var tab = d.querySelector('[data-tab="buydays"]');
         if (tab) tab.click();
-        setTimeout(function () { w.scrollTo(0, y); }, 400);
+        var m = parseInt(new URLSearchParams(location.search).get("m") || "0", 10) || 0;
+        setTimeout(function () {
+          var next = d.querySelector('[data-bd-nav="1"]');
+          for (var i = 0; i < m && next; i++) next.click();
+          setTimeout(function () { w.scrollTo(0, y); }, 300);
+        }, 300);
       } catch (e) { /* 캡처용 */ }
     });
   })();
