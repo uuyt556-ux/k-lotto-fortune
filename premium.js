@@ -379,7 +379,7 @@
     var a = analysis();
     if (!a) { box.innerHTML = needSaju("1년 재물운 캘린더"); bindCommon(box); return; }
     if (!(M && M.has("annualReport"))) {
-      box.innerHTML = gateHtml("annualReport", "앞으로 12개월의 <b>월별 재물운</b>을 달력으로 정리해 드립니다. 돈이 붙는 달과 눌리는 달을 미리 알고 계획하세요.");
+      box.innerHTML = gateHtml("annualReport", "2027 신년 재물운까지 앞으로 12개월의 <b>월별 재물운</b>을 달력으로 정리해 드립니다. 돈이 붙는 달과 눌리는 달을 미리 알고 계획하세요.");
       bindCommon(box);
       return;
     }

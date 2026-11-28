@@ -1,4 +1,4 @@
-/*! 운명 로또 — K-사주 로또 스타일 */
+/*! 복채로또 — 사주·2027 재물운 번호 스타일 */
 :root {
   --hanji: #FBF7EE;
   --hanji-2: #F4ECDC;
@@ -135,6 +135,13 @@ button { font-family: inherit; }
   border: 1px solid rgba(201, 151, 44, .22); border-radius: 50%;
   box-shadow: 0 0 0 12px rgba(201, 151, 44, .05), 0 0 0 26px rgba(201, 151, 44, .03);
   pointer-events: none;
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; letter-spacing: .2px;
+  color: var(--gold-d); background: rgba(201, 151, 44, .10);
+  border: 1px solid rgba(201, 151, 44, .28); border-radius: 999px;
+  padding: 4px 10px; margin-bottom: 9px;
 }
 .hero-date { font-size: 12px; color: var(--meok-3); letter-spacing: .3px; }
 .hero-main { display: flex; align-items: center; gap: 14px; margin-top: 4px; }

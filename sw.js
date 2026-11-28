@@ -1,22 +1,22 @@
-/* 운명 로또 — K-사주 로또
+/* 복채로또 — 사주·2027 재물운 번호
    Service Worker: 네트워크 우선 + 오프라인 캐시
    (앱을 자주 고치므로 캐시 우선 대신 네트워크를 먼저 확인하고, 끊겼을 때만 캐시를 씁니다)
    GitHub Pages 하위 경로(/k-lotto-fortune/)에서도 동작하도록 상대 경로 사용 */
 
-var CACHE = 'unmyeong-lotto-v7';
+var CACHE = 'bokchae-lotto-v7';
 var SHELL = [
   './',
   './index.html',
   './manifest.json',
   './privacy.html',
-  './style.css?v=6',
-  './webtoon.css?v=6',
-  './lunar.js?v=6',
-  './saju.js?v=6',
-  './account.js?v=6',
-  './premium.js?v=6',
-  './webtoon.js?v=6',
-  './app.js?v=6',
+  './style.css?v=7',
+  './webtoon.css?v=7',
+  './lunar.js?v=7',
+  './saju.js?v=7',
+  './account.js?v=7',
+  './premium.js?v=7',
+  './webtoon.js?v=7',
+  './app.js?v=7',
   './assets/teller-male.webp',
   './assets/teller-female.webp',
   './icon-192.png',

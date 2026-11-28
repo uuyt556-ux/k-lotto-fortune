@@ -1,4 +1,4 @@
-/*! app.js — 운명 로또 UI */
+/*! app.js — 복채로또 UI */
 (function () {
   "use strict";
 
