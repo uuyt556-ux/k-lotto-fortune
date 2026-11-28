@@ -354,7 +354,8 @@
 
     var seedDate = new Date(info.date.getTime());
     seedDate.setHours(12, 0, 0, 0);
-    var gen = Saju.recommend(state.analysis, state.birth.key, seedDate, (state.data && state.data.draws) || []);
+    /* 일일 황금 5조합과 겹치지 않도록 주간 전용 씨앗을 씁니다 */
+    var gen = Saju.recommend(state.analysis, state.birth.key + "|weekly", seedDate, (state.data && state.data.draws) || []);
     rec = {
       round: info.round,
       date: info.key,

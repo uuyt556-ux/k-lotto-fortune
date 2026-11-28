@@ -322,7 +322,7 @@
       ctx.save();
       ctx.translate(w / 2, h / 2);
       ctx.rotate(-Math.PI / 6);
-      ctx.globalAlpha = .13;
+      ctx.globalAlpha = .22;
       ctx.fillStyle = "#F8F1DE";
       ctx.font = '700 58px "Nanum Myeongjo", "Gowun Batang", serif';
       ctx.textAlign = "center";
@@ -393,7 +393,7 @@
     }
     if (saveBtn) {
       saveBtn.disabled = !state.paid;
-      saveBtn.textContent = state.paid ? "갤러리 저장 (이미지 다운로드)" : "결제 후 저장할 수 있어요";
+      saveBtn.textContent = state.paid ? "갤러리 저장 (PNG)" : "결제 후 저장할 수 있어요";
     }
     if (share) share.hidden = !state.paid;
     if (hint) {
