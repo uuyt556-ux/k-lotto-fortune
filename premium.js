@@ -83,7 +83,7 @@
       "<p>" + msg + "</p>" +
       ghostRow() +
       '<button type="button" class="btn btn-gold" data-open-plans style="margin-top:12px">멤버십 보고 열기</button>' +
-      '<p class="tiny">베타 테스트 모드에서는 ‘체험 결제’를 누르면 바로 열립니다. 실제 청구는 없습니다.</p>' +
+      '<p class="tiny">이용권 코드를 등록하면 바로 열립니다.</p>' +
       "</div>";
   }
   function needSaju(where) {
@@ -563,7 +563,7 @@
   function miniCta(line) {
     return '<div class="ny-mini-cta"><p>' + line + "</p>" +
       '<button type="button" class="btn btn-gold" data-ny-pay="monthly">복채 패스 6,900원으로 전체 열기</button>' +
-      '<p class="tiny">베타 테스트 결제 모드 · 실제 청구는 없습니다</p></div>';
+      '<p class="tiny">입금 확인 후 받은 이용권 코드로 바로 열립니다</p></div>';
   }
 
   function annualHero(A) {
@@ -609,7 +609,7 @@
       "</ul>" +
       '<button type="button" class="btn btn-gold" data-ny-pay="monthly">복채 패스 6,900원으로 전체 열기</button>' +
       '<button type="button" class="btn btn-ghost" data-ny-pay="annual">1년 패스 59,000원 · 월 4,917원꼴</button>' +
-      '<p class="tiny">베타 테스트 결제 모드 · 실제 청구는 없습니다</p>' +
+      '<p class="tiny">입금 확인 후 받은 이용권 코드로 바로 열립니다</p>' +
       "</div>";
   }
 

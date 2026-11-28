@@ -17,8 +17,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=17" />
-<link rel="stylesheet" href="webtoon.css?v=17" />
+<link rel="stylesheet" href="style.css?v=18" />
+<link rel="stylesheet" href="webtoon.css?v=18" />
 <style>
 /* 인트로 스플래시 — 외부 CSS를 기다리지 않고 첫 페인트부터 화면을 덮도록 하는 최소 스타일 */
 html.splashing { background-color: #100E0C; }
@@ -318,7 +318,7 @@ html.splashing, html.splashing body { overflow: hidden; }
               <span class="wish-lock-ico" aria-hidden="true">🔒</span>
               <p class="wish-teller" data-teller-line>미녀 점술사 설아 — 복채를 내야 부적에 힘이 생깁니다.</p>
               <button type="button" class="btn btn-gold" id="wishBuy">10,000원 복채 내고 소원 부적 소장하기</button>
-              <p class="tiny">구독 요금제와 별개의 단건 상품 · 테스트 결제 (실제 청구 없음)</p>
+              <p class="tiny">구독 요금제와 별개의 단건 상품 · 1건 10,000원</p>
             </div>
           </div>
           <div class="btn-row" style="margin-top:12px">
@@ -381,24 +381,30 @@ html.splashing, html.splashing body { overflow: hidden; }
           <span class="right" id="tierNow">무료 회원</span>
         </div>
 
-        <div class="beta-note">
-          <b>베타 · 테스트 결제 모드</b>
-          <p>지금은 실제로 청구되지 않는 체험 모드입니다. 버튼을 누르면 이 기기에서만 등급이 바뀌고, 모든 기능이 실제로 열립니다.
-            정식 출시 시 Google Play 인앱 결제(Google Play Billing)와 계정 서버로 교체됩니다. ‘3일 소원 부적·카드’는 구독과 별도의 <b>1건 10,000원</b> 단건 결제입니다.</p>
+        <div class="pay-intro">
+          <b>계좌이체로 결제하고, 이용권 코드로 바로 시작</b>
+          <p>요금제를 고르면 입금 계좌가 나옵니다. 입금자명에 본인 성함 또는 닉네임을 적고 입금 확인을 알려주시면 <b>이용권 코드</b>를 보내드립니다. 받은 코드를 아래에 넣으면 즉시 등급이 열립니다.</p>
+          <div class="bank-mini">
+            <span>카카오뱅크 <b>3333-06-3329778</b> · 예금주 이원철</span>
+            <button type="button" class="bank-copy" data-copy-acc>계좌 복사</button>
+          </div>
         </div>
+
+        <div id="voucherTop"></div>
 
         <div class="plans" id="planList"></div>
 
         <details class="terms" id="termsBox">
-          <summary>결제 · 자동갱신 · 해지 · 환불 조건</summary>
+          <summary>결제 · 이용 기간 · 환불 조건</summary>
           <ul>
-            <li><b>요금</b> — 월간 <b>복채 패스 6,900원</b>(1개월 자동갱신) / 연간 <b>1년 패스 59,000원</b>(12개월, 월 4,917원꼴 · 약 29% 할인) / VIP <b>황금 사주 패스</b> 월 12,900원 또는 평생 89,000원(1회 결제). 부가세 포함 금액입니다.</li>
+            <li><b>요금</b> — 월간 <b>복채 패스 6,900원</b>(1개월) / 연간 <b>1년 패스 59,000원</b>(12개월, 월 4,917원꼴 · 약 29% 할인) / VIP <b>황금 사주 패스</b> 월 12,900원 또는 평생 89,000원(1회 결제). 부가세 포함 금액입니다.</li>
             <li><b>매주 복채 5조합</b> — 복채 패스 이상 회원에게는 매주 토요일 추첨 회차 기준 <b>복채 5조합</b>이 자동 발급되어 회차별 보관함에 저장됩니다. VIP는 정밀 10조합까지 매주 발급됩니다.</li>
             <li><b>단건 상품</b> — ‘3일 소원 부적·카드’는 구독 요금제와 별개의 <b>1건 10,000원</b> 상품이며, 결제 즉시 이미지가 제공되는 디지털 콘텐츠로 제공 시작 후 청약철회가 제한될 수 있습니다.</li>
-            <li><b>자동갱신</b> — 다음 결제 예정일 <b>24시간 전까지</b> 해지하면 다음 회차 금액이 청구되지 않습니다. 해지 후에도 이미 결제한 기간의 만료일까지는 그대로 이용할 수 있습니다.</li>
+            <li><b>결제 방식</b> — 현재는 <b>계좌이체</b>(카카오뱅크 3333-06-3329778 · 예금주 이원철)로 입금하고, 입금 확인 후 받은 <b>이용권 코드</b>를 앱에 등록하면 바로 이용할 수 있습니다. 코드는 등록한 기기(브라우저)에서만 유효하며 한 번만 쓸 수 있습니다.</li>
+            <li><b>이용 기간</b> — 이용권은 <b>자동갱신 없이</b> 고른 기간만 이용합니다. 기간이 끝나면 자동으로 무료 회원이 되고 추가 결제가 일어나지 않습니다.</li>
             <li><b>청약철회</b> — 결제 후 7일 이내에 콘텐츠를 이용하지 않았다면 청약철회(전액 환불)할 수 있습니다. 다만 황금 5조합·심층 리포트 등 <b>디지털 콘텐츠 열람을 시작한 뒤에는 청약철회가 제한</b>될 수 있습니다(전자상거래법 제17조 제2항).</li>
             <li><b>환불</b> — 중도 해지 시 이용하지 않은 잔여 기간에 대해 관련 법령과 스토어 정책에 따라 환불을 검토합니다. 단순 변심에 의한 부분 환불은 제한될 수 있습니다.</li>
-            <li><b>스토어 결제</b> — Google Play에서 결제하는 경우 Google Play의 환불·해지 정책이 함께 적용되며, 해지는 Google Play 구독 메뉴에서도 가능합니다.</li>
+            <li><b>스토어 결제</b> — 향후 Google Play 인앱 결제를 도입하면 그 결제·환불 정책이 함께 적용되며, 도입 시점에 이 화면에서 미리 알립니다.</li>
             <li><b>가격 변경</b> — 요금이 바뀌면 최소 30일 전에 앱과 이 화면에서 알립니다.</li>
           </ul>
         </details>
@@ -461,7 +467,7 @@ html.splashing, html.splashing body { overflow: hidden; }
     </div>
 
     <footer class="foot">
-      복채로또 · 사주·2027 재물운 번호 v1.5<br />
+      복채로또 · 사주·2027 재물운 번호 v1.6<br />
       <a href="./privacy.html">개인정보처리방침</a> · <a href="#today">맨 위로</a><br />
       © 2026 복채로또
     </footer>
@@ -471,8 +477,8 @@ html.splashing, html.splashing body { overflow: hidden; }
 <!-- 하단 배너 광고 자리 -->
 <div class="adbar" id="adbar">
   <div class="adbar-inner">
-    <span class="ad-badge">AD</span>
-    <div class="ad-slot">배너 광고 영역 · AdMob 연동 예정</div>
+    <span class="ad-badge">福</span>
+    <div class="ad-slot">복채로또 · 매주 토요일 복채 5조합, 복채 패스로 광고 없이</div>
     <button class="ad-close" id="adClose" aria-label="광고 영역 닫기">×</button>
   </div>
 </div>
@@ -508,7 +514,7 @@ html.splashing, html.splashing body { overflow: hidden; }
   <div class="modal">
     <div class="seal seal-mini" aria-hidden="true" style="margin:0 auto 8px">福</div>
     <h3 id="adTitle">복채를 받는 중</h3>
-    <p id="adDesc">짧은 광고가 끝나면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.</p>
+    <p id="adDesc">짧게 기다리면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.</p>
     <div class="countdown" id="adCount">
       <svg viewBox="0 0 92 92" aria-hidden="true">
         <circle cx="46" cy="46" r="41" fill="none" stroke="rgba(30,27,24,.09)" stroke-width="6" />
@@ -517,9 +523,9 @@ html.splashing, html.splashing body { overflow: hidden; }
       </svg>
       <b id="adSec">3</b>
     </div>
-    <button type="button" class="btn btn-gold" id="adDone" disabled>광고 시청 중…</button>
+    <button type="button" class="btn btn-gold" id="adDone" disabled>준비 중…</button>
     <button type="button" class="btn btn-ghost" id="adCancel" style="margin-top:8px">닫기</button>
-    <p class="tiny">웹 데모용 모의 광고입니다. 앱 출시 시 AdMob 보상형 광고로 교체됩니다.</p>
+    <p class="tiny">잠시만 기다리면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.</p>
   </div>
 </div>
 
@@ -560,7 +566,7 @@ html.splashing, html.splashing body { overflow: hidden; }
     <button type="button" class="modal-x" data-close="authModal" aria-label="닫기">×</button>
     <div class="seal seal-mini" aria-hidden="true">會</div>
     <h3 id="authTitle">회원가입 · 로그인</h3>
-    <p class="tiny beta-line">베타 테스트 계정입니다. 계정 정보는 이 기기(브라우저)에만 저장되고 실제 본인인증·서버 전송은 없습니다.</p>
+    <p class="tiny beta-line">계정 정보는 이 기기(브라우저)에만 저장되며 서버로 전송되지 않습니다.</p>
 
     <div class="tabs" id="authTabs" role="tablist">
       <button type="button" data-auth-tab="login" class="on" role="tab">로그인</button>
@@ -603,18 +609,7 @@ html.splashing, html.splashing body { overflow: hidden; }
       <button class="btn btn-primary" type="submit">회원가입</button>
     </form>
 
-    <div class="or"><span>또는</span></div>
-    <div class="social">
-      <button type="button" class="sns google" data-social="google">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-3.8V7.6H3.1a10 10 0 0 0 0 9l3.3-2.6z"/><path fill="#EA4335" d="M12 6.1c1.5 0 2.8.5 3.8 1.5l2.8-2.8A10 10 0 0 0 3.1 7.6L6.4 10c.8-2.3 3-3.9 5.6-3.9z"/></svg>
-        Google로 계속
-      </button>
-      <button type="button" class="sns kakao" data-social="kakao">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#3A1D1D" d="M12 3.5c-4.7 0-8.5 3-8.5 6.7 0 2.4 1.6 4.5 4 5.7l-1 3.6c-.1.4.3.7.7.5l4.1-2.6c.2 0 .5.1.7.1 4.7 0 8.5-3 8.5-6.7S16.7 3.5 12 3.5z"/></svg>
-        카카오로 계속
-      </button>
-    </div>
-    <p class="tiny">소셜 로그인은 데모에서 <b>원클릭 테스트 계정</b>으로 동작합니다. 실제 연동 시 각 사업자 OAuth로 교체됩니다.</p>
+    <p class="tiny">가입 정보는 이 기기(브라우저) 안에만 저장됩니다. 비밀번호는 소금값과 함께 해시로만 보관합니다.</p>
   </div>
 </div>
 
@@ -627,23 +622,23 @@ html.splashing, html.splashing body { overflow: hidden; }
   </div>
 </div>
 
-<!-- 체험 결제 확인 모달 -->
+<!-- 결제 · 이용권 코드 모달 -->
 <div class="modal-back" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payTitle">
   <div class="modal">
     <button type="button" class="modal-x" data-close="payModal" aria-label="닫기">×</button>
-    <h3 id="payTitle">체험 결제</h3>
+    <h3 id="payTitle">결제 · 이용권 등록</h3>
     <div id="payBody"></div>
   </div>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="lunar.js?v=17"></script>
-<script src="saju.js?v=17"></script>
-<script src="account.js?v=17"></script>
-<script src="premium.js?v=17"></script>
-<script src="webtoon.js?v=17"></script>
-<script src="wish.js?v=17"></script>
-<script src="app.js?v=17"></script>
+<script src="lunar.js?v=18"></script>
+<script src="saju.js?v=18"></script>
+<script src="account.js?v=18"></script>
+<script src="premium.js?v=18"></script>
+<script src="webtoon.js?v=18"></script>
+<script src="wish.js?v=18"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

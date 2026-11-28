@@ -1,11 +1,12 @@
 /*! account.js — 회원·구독(요금제) 엔진 + 멤버십 UI
  *
- *  ⚠ 베타/테스트 결제 모드
- *  · 지금은 서버 없이 이 기기(localStorage)에만 계정·구독 상태를 저장합니다. 실제 금액은 청구되지 않습니다.
- *  · 정식 출시 시 교체 지점 (아래 어댑터만 바꾸면 UI는 그대로 씁니다)
+ *  결제 방식: 계좌이체 → 입금 확인 → 이용권 코드 발급 → 앱에서 코드 등록 시 즉시 활성화
+ *  · 계정·구독 상태는 이 기기(localStorage)에만 저장합니다. 카드·계좌 정보는 받지 않습니다.
+ *  · 이용권 코드는 등급별 접두사 + 체크섬으로 검증하고, 같은 브라우저에서 두 번 쓸 수 없습니다.
+ *  · 앱스토어 인앱 결제로 옮길 때의 교체 지점 (아래 어댑터만 바꾸면 UI는 그대로 씁니다)
  *      1) 인증         : Supabase Auth / Firebase Auth  → Auth.signUp, Auth.signIn, Auth.signOut
  *      2) 구독 상태     : Supabase/Firebase 테이블(entitlements) → Billing.fetchSubscription()
- *      3) 결제          : Google Play Billing (앱) / 스토어 웹 결제 → Billing.purchase(planId)
+ *      3) 결제          : Google Play Billing → Billing.purchase(planId)
  *      4) 영수증 검증    : 서버에서 Google Play Developer API로 purchaseToken 검증 후 등급 부여
  */
 (function (global) {
@@ -16,7 +17,8 @@
     session: "unmyeong.session.v1",
     subs: "unmyeong.subs.v1",
     prefs: "unmyeong.prefs.v1",
-    saved: "unmyeong.saved.v1"
+    saved: "unmyeong.saved.v1",
+    vouchers: "unmyeong.vouchers.v1"
   };
 
   /* ───────── 요금제 정의 (서버 상품 ID와 1:1로 맞출 것) ───────── */
@@ -30,7 +32,7 @@
   var PLANS = {
     monthly: {
       id: "monthly", tier: "monthly", name: "복채 패스", hanja: "月",
-      price: 6900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "",
+      price: 6900, unit: "원 / 월", cycle: "1개월 이용 · 자동갱신 없음", months: 1, autoRenew: false, badge: "", 
       features: [
         "배너·보상형 광고 완전 제거",
         "2027 신년 총운세 · 금전·사업·건강·연애 4운",
@@ -43,7 +45,7 @@
     },
     annual: {
       id: "annual", tier: "annual", name: "1년 패스", hanja: "年",
-      price: 59000, unit: "원 / 년", cycle: "월 4,917원꼴 · 약 29% 할인", months: 12, autoRenew: true, badge: "인기",
+      price: 59000, unit: "원 / 년", cycle: "12개월 이용 · 월 4,917원꼴", months: 12, autoRenew: false, badge: "인기", 
       features: [
         "복채 패스 혜택 전체 (매주 5조합 자동 발급)",
         "2027 신년 총운세 12개월 전체 풀이",
@@ -53,12 +55,12 @@
     },
     vip_monthly: {
       id: "vip_monthly", tier: "vip", name: "황금 사주 패스", hanja: "貴",
-      price: 12900, unit: "원 / 월", cycle: "1개월 자동갱신", months: 1, autoRenew: true, badge: "VIP",
+      price: 12900, unit: "원 / 월", cycle: "1개월 이용 · 자동갱신 없음", months: 1, autoRenew: false, badge: "VIP", 
       features: VIP_FEATURES
     },
     vip_lifetime: {
       id: "vip_lifetime", tier: "vip", name: "황금 사주 패스 평생", hanja: "永",
-      price: 89000, unit: "원 / 1회", cycle: "평생 이용 · 자동갱신 없음", months: 0, autoRenew: false, badge: "VIP",
+      price: 89000, unit: "원 / 1회", cycle: "평생 이용 · 추가 결제 없음", months: 0, autoRenew: false, badge: "VIP", 
       features: VIP_FEATURES.concat(["추가 결제·자동갱신 없음"])
     }
   };
@@ -72,6 +74,30 @@
   };
 
   var TIER_NAME = { free: "무료 회원", monthly: "복채 패스", annual: "1년 패스", vip: "황금 사주 패스" };
+
+  /* ───────── 입금 계좌 ───────── */
+  var BANK = {
+    bank: "카카오뱅크",
+    account: "3333-06-3329778",
+    holder: "이원철",
+    contact: "uuyt77@naver.com"
+  };
+
+  /* ───────── 이용권 코드 ─────────
+     BC-<등급>-<페이로드 3자><체크섬 2자>   예) BC-P-K7M2Q
+       P 복채 패스(월) · Y 1년 패스 · V 황금 사주 패스(월) · L 황금 사주 패스(평생) · W 3일 소원 부적
+     마지막 두 자리는 페이로드·등급·비밀값으로 계산한 체크섬입니다. 아무 문자열이나 넣으면 통과하지 않습니다. */
+  var VOUCHER = {
+    alpha: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+    salt: "BOKCHAE-LOTTO-2026",
+    prefix: {
+      P: { plan: "monthly", label: "복채 패스" },
+      Y: { plan: "annual", label: "1년 패스" },
+      V: { plan: "vip_monthly", label: "황금 사주 패스" },
+      L: { plan: "vip_lifetime", label: "황금 사주 패스 평생" },
+      W: { plan: "wish", label: "3일 소원 부적" }
+    }
+  };
   var TIER_GATE = { noAds: "복채 패스", goldInstant: "복채 패스", weeklyAlert: "복채 패스", weekly5: "복채 패스", newYear: "복채 패스", annualReport: "1년 패스", deepReport: "황금 사주 패스", tenCombos: "황금 사주 패스", filters: "황금 사주 패스", luckyDay: "황금 사주 패스", vipTheme: "황금 사주 패스" };
 
   /* ───────── 저장소 ───────── */
@@ -170,7 +196,7 @@
     if (!s) return null;
     return subsAll()[s.email] || null;
   }
-  /* 자동갱신 구독이 만료일을 지나면 다음 주기로 넘깁니다(테스트 모드 시뮬레이션) */
+  /* 자동갱신 구독이 만료일을 지나면 다음 주기로 넘깁니다(자동갱신 상품용) */
   function rollRenewals() {
     var s = session();
     if (!s) return;
@@ -208,6 +234,205 @@
   function limitText() {
     var n = saveLimit();
     return n ? n + "개" : "무제한";
+  }
+
+  /* ───────── 이용권 코드 검증 · 등록 ───────── */
+  function vHash(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function vCheck(prefix, payload) {
+    var h = vHash("BC|" + prefix + "|" + payload + "|" + VOUCHER.salt);
+    return VOUCHER.alpha.charAt(h % 32) + VOUCHER.alpha.charAt((h >>> 5) % 32);
+  }
+  /* 입력값을 정리해 등급·체크섬을 확인합니다. 형식이 아니면 null, 체크섬이 틀리면 valid:false */
+  function parseVoucher(raw) {
+    var s = String(raw == null ? "" : raw).toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (s.indexOf("BC") !== 0) return null;
+    var prefix = s.charAt(2);
+    if (!VOUCHER.prefix[prefix]) return null;
+    var body = s.slice(3);
+    if (body.length !== 5) return null;
+    for (var i = 0; i < body.length; i++) {
+      if (VOUCHER.alpha.indexOf(body.charAt(i)) < 0) return null;
+    }
+    var payload = body.slice(0, 3), check = body.slice(3);
+    return {
+      code: "BC-" + prefix + "-" + body,
+      prefix: prefix,
+      valid: vCheck(prefix, payload) === check,
+      meta: VOUCHER.prefix[prefix]
+    };
+  }
+  function usedCodes() { return load(K.vouchers, {}) || {}; }
+
+  /*
+   * 코드 한 개를 등록합니다.
+   *  - 등급 코드(P·Y·V·L): 로그인한 계정의 구독으로 등록 (같은 등급이면 남은 기간에 이어 붙임)
+   *  - 소원 부적 코드(W): 이 기기의 부적 카드 잠금을 해제
+   *  - 등록한 코드는 이 브라우저에서 다시 쓸 수 없습니다.
+   */
+  function redeemVoucher(raw, opts) {
+    opts = opts || {};
+    var p = parseVoucher(raw);
+    if (!p) return { ok: false, msg: "이용권 코드 형식이 올바르지 않습니다. (예: BC-P-XXXXX)" };
+    if (!p.valid) return { ok: false, msg: "유효하지 않은 이용권 코드입니다. 입금 확인 후 받은 코드를 다시 확인해 주세요." };
+    var used = usedCodes();
+    if (used[p.code]) return { ok: false, msg: "이미 등록된 이용권 코드입니다. 새 코드를 받아 주세요." };
+
+    var now = new Date();
+    if (p.prefix === "W") {
+      used[p.code] = { at: now.toISOString(), product: "wish" };
+      save(K.vouchers, used);
+      if (global.Wish && global.Wish.grant) global.Wish.grant(p.code);
+      document.dispatchEvent(new CustomEvent("unmyeong:voucher", { detail: { kind: "wish", code: p.code } }));
+      return { ok: true, kind: "wish", meta: p.meta };
+    }
+
+    var s = session();
+    if (!s) return { ok: false, needLogin: true, msg: "이용권을 등록하려면 먼저 로그인해 주세요." };
+    var plan = PLANS[p.meta.plan];
+    if (!plan) return { ok: false, msg: "이용권 정보를 확인할 수 없습니다." };
+
+    var prev = rawSub();
+    var prevActive = !!(prev && prev.tier !== "free" && (!prev.expiresAt || new Date(prev.expiresAt).getTime() > now.getTime()));
+    if (prevActive && !prev.expiresAt) {
+      return { ok: false, msg: "이미 황금 사주 패스 평생 이용권을 등록하셨습니다. 이 코드는 아직 쓰지 않았으니 다른 기기에서 등록하시거나 문의해 주세요." };
+    }
+    if (prevActive && prev.plan !== plan.id && !opts.force) {
+      var curName = (PLANS[prev.plan] && PLANS[prev.plan].name) || TIER_NAME[prev.tier];
+      return {
+        ok: false, confirmSwitch: true,
+        msg: "지금 " + curName + "을(를) 이용 중입니다.\n" + p.meta.label + " 이용권으로 바꿀까요? 남은 기간은 이어지지 않습니다."
+      };
+    }
+
+    var base = now;
+    if (prevActive && prev.plan === plan.id && prev.expiresAt) base = new Date(prev.expiresAt);
+    var sub = {
+      plan: plan.id,
+      tier: plan.tier,
+      name: plan.name,
+      price: plan.price,
+      currency: "KRW",
+      startedAt: now.toISOString(),
+      expiresAt: plan.months ? addMonths(base, plan.months).toISOString() : null,
+      autoRenew: false,
+      mode: "voucher",
+      voucher: p.code,
+      renewals: 0,
+      orderId: "VC-" + p.code
+    };
+    var all = subsAll();
+    all[s.email] = sub;
+    save(K.subs, all);
+    used[p.code] = { at: now.toISOString(), product: plan.id, email: s.email };
+    save(K.vouchers, used);
+    emit();
+    renderMy();
+    return { ok: true, kind: "plan", plan: plan, sub: sub };
+  }
+
+  /* ───────── 계좌이체 안내 · 이용권 코드 입력 UI ───────── */
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-1000px";
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        var ok = document.execCommand("copy");
+        ta.remove();
+        ok ? resolve() : reject(new Error("copy-failed"));
+      } catch (e) { reject(e); }
+    });
+  }
+
+  function bankBoxHtml(amount) {
+    return '<div class="bank-box">' +
+      '<div class="bank-title">계좌이체로 입금해 주세요</div>' +
+      '<div class="bank-row"><span>은행</span><b>' + BANK.bank + '</b></div>' +
+      '<div class="bank-row"><span>계좌번호</span><b class="bank-acc">' + BANK.account + '</b>' +
+        '<button type="button" class="bank-copy" data-copy-acc>계좌 복사</button></div>' +
+      '<div class="bank-row"><span>예금주</span><b>' + BANK.holder + '</b></div>' +
+      '<div class="bank-row bank-amount"><span>입금 금액</span><b>' + won(amount) + '원</b></div>' +
+      '</div>' +
+      '<p class="pay-guide">입금자명에 <b>본인 성함 또는 닉네임</b>을 적어 주시고, 입금 확인 문의를 ' +
+        '<a href="mailto:' + BANK.contact + '">' + BANK.contact + '</a> 로 보내주시면 <b>이용권 코드</b>를 보내드립니다. ' +
+        '받은 코드를 아래에 입력하면 바로 적용됩니다.</p>';
+  }
+
+  function voucherBoxHtml(prefix, label) {
+    var p = prefix || "top";
+    return '<div class="voucher-box">' +
+      '<div class="voucher-title">' + (label || "이용권 코드 등록") + '</div>' +
+      '<div class="voucher-row">' +
+        '<input type="text" class="voucher-input" id="vc-' + p + '-in" placeholder="BC-P-XXXXX" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" />' +
+        '<button type="button" class="voucher-btn" id="vc-' + p + '-go">적용</button>' +
+      '</div>' +
+      '<p class="voucher-msg" id="vc-' + p + '-msg" hidden></p>' +
+      '</div>';
+  }
+
+  function setVoucherMsg(el, text, ok) {
+    if (!el) return;
+    el.hidden = !text;
+    el.textContent = text || "";
+    el.className = "voucher-msg" + (text ? (ok ? " ok" : " err") : "");
+  }
+
+  /* 계좌 복사 버튼만 묶습니다(멤버십 상단 요약 등) */
+  function bindCopy(root) {
+    $$("[data-copy-acc]", root).forEach(function (b) {
+      b.addEventListener("click", function () {
+        copyText(BANK.account).then(function () {
+          toast(BANK.bank + " " + BANK.account + " 계좌번호를 복사했습니다");
+        }).catch(function () {
+          toast("계좌번호 " + BANK.account + " 를 길게 눌러 복사해 주세요");
+        });
+      });
+    });
+  }
+
+  /* 계좌이체 안내 + 코드 입력 상자를 한 번에 묶습니다 */
+  function bindPayBox(root, prefix, onDone) {
+    root = root || document;
+    bindCopy(root);
+    var input = root.querySelector("#vc-" + prefix + "-in");
+    var btn = root.querySelector("#vc-" + prefix + "-go");
+    var msg = root.querySelector("#vc-" + prefix + "-msg");
+    if (!input || !btn) return;
+
+    function submit() {
+      var raw = input.value;
+      if (!raw.trim()) { setVoucherMsg(msg, "이용권 코드를 입력해 주세요.", false); input.focus(); return; }
+      var r = redeemVoucher(raw);
+      if (r.confirmSwitch) {
+        if (!confirm(r.msg)) return;
+        r = redeemVoucher(raw, { force: true });
+      }
+      if (!r.ok) {
+        setVoucherMsg(msg, r.msg, false);
+        if (r.needLogin) { closeModal("payModal"); openAuth("login"); }
+        return;
+      }
+      input.value = "";
+      setVoucherMsg(msg, "", false);
+      if (onDone) onDone(r);
+    }
+    btn.addEventListener("click", submit);
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); submit(); }
+    });
   }
 
   /* ───────── 결제 어댑터 ─────────
@@ -323,11 +548,11 @@
     var btn;
     if (plan.id === "free") {
       btn = currentUser() && tier() !== "free"
-        ? '<button type="button" class="btn btn-ghost" data-downgrade="1">무료로 전환 (테스트)</button>'
+        ? '<p class="plan-foot">이용 기간이 끝나면 자동으로 무료 회원이 됩니다</p>'
         : '<button type="button" class="btn btn-ghost" data-free="1">' + (currentUser() ? "현재 등급" : "무료로 시작") + "</button>";
     } else {
       btn = '<button type="button" class="btn ' + (plan.tier === "vip" ? "btn-gold" : "btn-primary") + '" data-buy="' + plan.id + '">' +
-        (isNow ? "이용 중 · 기간 연장 (테스트)" : plan.name.replace(" 회원", "") + " 체험 결제 (테스트)") + "</button>";
+        (isNow ? "이용 기간 연장하기" : plan.name.replace(" 회원", "") + " 시작하기") + "</button>";
     }
     return '<div class="plan plan-' + plan.tier + (isNow ? " now" : "") + '" data-plan="' + plan.id + '">' +
       '<div class="plan-top">' +
@@ -357,7 +582,7 @@
       '<div class="plan-price"><b>' + won(plan.price) + '</b><small>' + plan.unit + "</small><em>" + plan.cycle + "</em></div>" +
       '<ul class="plan-feats">' + plan.features.map(function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>" +
       '<button type="button" class="btn btn-gold" data-buy="' + plan.id + '">' +
-        (isNow ? (plan.months ? "이용 중 · 기간 연장 (테스트)" : "이용 중 (평생)") : "황금 사주 패스 체험 결제 (테스트)") + "</button>" +
+        (isNow ? (plan.months ? "이용 기간 연장하기" : "이용 중 (평생)") : "황금 사주 패스 시작하기") + "</button>" +
       "</div>";
   }
 
@@ -371,8 +596,8 @@
       features: [
         "오늘의 재물운 요약 · 행운 숫자",
         "사주 추천 1조합",
-        "보상형 광고(3초) 보고 황금 5조합",
-        "내 번호 저장 5개 · 배너 광고 노출"
+        "3초 복채 후 황금 5조합",
+        "내 번호 저장 5개"
       ]
     };
     box.innerHTML =
@@ -392,13 +617,6 @@
     });
     $$("[data-buy]", box).forEach(function (b) {
       b.addEventListener("click", function () { openPay(b.getAttribute("data-buy")); });
-    });
-    var dg = $("[data-downgrade]", box);
-    if (dg) dg.addEventListener("click", function () {
-      if (!confirm("테스트 모드에서 구독을 취소하고 무료 회원으로 돌아갑니다.\n저장한 번호는 그대로 남습니다. 계속할까요?")) return;
-      Billing.reset();
-      emit();
-      toast("무료 회원으로 전환했습니다");
     });
     var fb = $("[data-free]", box);
     if (fb) fb.addEventListener("click", function () {
@@ -434,11 +652,11 @@
     if (!u) {
       body.innerHTML =
         '<div class="my-guest">' +
-          '<p>로그인하면 요금제를 고르고 구독을 관리할 수 있습니다.<br />가입은 이메일 또는 소셜 테스트 계정으로 30초면 됩니다.</p>' +
+          '<p>로그인하면 요금제를 고르고 <b>이용권 코드</b>를 등록할 수 있습니다.<br />이메일로 30초면 가입됩니다.</p>' +
           '<button type="button" class="btn btn-primary" data-my="signup">회원가입</button>' +
           '<button type="button" class="btn btn-ghost" data-my="login" style="margin-top:8px">로그인</button>' +
         "</div>" +
-        '<p class="tiny center">베타 테스트 모드 · 계정과 구독 정보는 이 기기에만 저장됩니다.</p>' +
+        '<p class="tiny center">계정과 구독 정보는 이 기기에만 저장됩니다.</p>' +
         '<div class="btn-row" style="margin-top:10px"><button type="button" class="btn btn-ghost" data-my="plans">요금제 보기</button></div>';
       bindMy();
       return;
@@ -452,26 +670,17 @@
     var stateLine = "";
     if (sub && t !== "free") {
       if (!sub.expiresAt) {
-        stateLine = '<div class="kv"><span>이용 기간</span><b>평생 이용 · 자동갱신 없음</b></div>';
-      } else if (sub.autoRenew) {
-        stateLine = '<div class="kv"><span>다음 결제 예정</span><b>' + fmtDate(sub.expiresAt) + " · " + won(sub.price) + "원</b></div>";
+        stateLine = '<div class="kv"><span>이용 기간</span><b>평생 이용 · 추가 결제 없음</b></div>';
       } else {
-        stateLine = '<div class="kv"><span>이용 만료일</span><b>' + fmtDate(sub.expiresAt) + " · 자동갱신 해지됨</b></div>";
+        stateLine = '<div class="kv"><span>이용 만료일</span><b>' + fmtDate(sub.expiresAt) + " · 자동갱신 없음</b></div>";
       }
-      stateLine += '<div class="kv"><span>결제 방식</span><b>테스트 결제 (' + (sub.orderId || "-") + ")</b></div>";
+      stateLine += '<div class="kv"><span>등록 방식</span><b>계좌이체 이용권 (' + (sub.voucher || "-") + ")</b></div>";
     } else {
       stateLine = '<div class="kv"><span>구독 상태</span><b>구독 없음 (무료 회원)</b></div>';
     }
 
+    /* 계좌이체 이용권은 자동갱신이 없어 해지·철회 버튼이 필요 없습니다 */
     var actions = "";
-    var renewing = !!(sub && PLANS[sub.plan] && PLANS[sub.plan].months);
-    if (sub && t !== "free" && renewing) {
-      if (sub.autoRenew) {
-        actions = '<button type="button" class="btn btn-ghost" data-my="cancel">구독 해지</button>';
-      } else {
-        actions = '<button type="button" class="btn btn-ghost" data-my="resume">해지 철회</button>';
-      }
-    }
 
     body.innerHTML =
       '<div class="who">' +
@@ -495,7 +704,7 @@
         '<button type="button" class="btn btn-ghost" data-my="signout">로그아웃</button>' +
         '<button type="button" class="btn btn-ghost" data-my="delete">회원 탈퇴</button>' +
       "</div>" +
-      '<p class="tiny center" style="margin-top:12px">베타 테스트 모드 · 실제 결제·본인인증 없음. 구독 해지 시 현재 기간 만료일까지 그대로 이용됩니다.</p>';
+      '<p class="tiny center" style="margin-top:12px">이용권은 등록한 기기(브라우저)에서만 유효합니다. 이용 기간이 끝나면 자동으로 무료 회원이 되고, 추가 결제는 없습니다.</p>';
 
     bindMy();
   }
@@ -547,24 +756,15 @@
     if (pl && !pl.disabled) pl.addEventListener("change", function () { setPref("luckyDay", pl.checked); toast(pl.checked ? "길일 알림을 켰습니다" : "길일 알림을 껐습니다"); });
   }
 
-  /* ───────── 체험 결제 ───────── */
-  function ensureDemoAccount() {
-    if (currentUser()) return currentUser();
-    var all = users();
-    var email = "guest-" + randId(6) + "@unmyeong.test";
-    var user = {
-      email: email, nick: "체험회원", provider: "demo",
-      createdAt: new Date().toISOString(), birth: "", salt: null, pass: null
-    };
-    all[email] = user;
-    save(K.users, all);
-    save(K.session, { email: email, at: new Date().toISOString() });
-    return user;
-  }
-
+  /* ───────── 결제창 (계좌이체 + 이용권 코드) ───────── */
   function openPay(planId) {
     var plan = PLANS[planId];
     if (!plan) return;
+    if (!currentUser()) {
+      toast("로그인하면 입금 안내와 이용권 코드 등록을 할 수 있습니다");
+      openAuth("signup");
+      return;
+    }
     var u = currentUser();
     var now = new Date();
     var end = plan.months ? addMonths(now, plan.months) : null;
@@ -573,27 +773,21 @@
       '<div class="pay-head"><span class="pay-name">' + plan.name + "</span>" +
         '<span class="pay-price"><b>' + won(plan.price) + "</b>원" + (plan.months === 12 ? " / 년" : plan.months === 1 ? " / 월" : " / 1회") + "</span></div>" +
       '<div class="kv-list">' +
-        '<div class="kv"><span>결제 주기</span><b>' + plan.cycle + "</b></div>" +
-        (end ? '<div class="kv"><span>이용 기간</span><b>' + fmtDate(now.toISOString()) + " ~ " + fmtDate(end.toISOString()) + "</b></div>"
-             : '<div class="kv"><span>이용 기간</span><b>평생 (자동갱신 없음)</b></div>') +
-        '<div class="kv"><span>계정</span><b>' + (u ? esc(displayName()) + " · " + esc(u.email) : "체험 계정 자동 생성 (기기 저장)") + "</b></div>" +
-        '<div class="kv"><span>결제 수단</span><b>테스트 결제 · 실제 청구 없음</b></div>' +
+        '<div class="kv"><span>이용 기간</span><b>' + plan.cycle + "</b></div>" +
+        (end ? '<div class="kv"><span>등록 시 적용</span><b>' + fmtDate(now.toISOString()) + " ~ " + fmtDate(end.toISOString()) + "</b></div>"
+             : '<div class="kv"><span>등록 시 적용</span><b>평생 (추가 결제 없음)</b></div>') +
+        '<div class="kv"><span>계정</span><b>' + esc(displayName()) + " · " + esc(u.email) + "</b></div>" +
       "</div>" +
-      '<p class="tiny" style="text-align:left;margin-top:10px">청약철회: 결제 후 7일 이내 콘텐츠를 이용하지 않았다면 전액 환불됩니다. 열람을 시작한 뒤에는 디지털 콘텐츠 특성상 환불이 제한될 수 있습니다. 자동갱신 구독은 다음 결제 24시간 전까지 해지하면 다음 회차가 청구되지 않습니다.</p>' +
-      '<button type="button" class="btn btn-gold" id="payGo" style="margin-top:10px">테스트 결제하고 시작하기</button>' +
-      '<button type="button" class="btn btn-ghost" id="payCancel" style="margin-top:8px">취소</button>';
+      bankBoxHtml(plan.price) +
+      voucherBoxHtml("pay", "입금 확인 후 받은 이용권 코드") +
+      '<p class="tiny" style="text-align:left;margin-top:10px">청약철회: 결제 후 7일 이내 콘텐츠를 이용하지 않았다면 전액 환불됩니다. 열람을 시작한 뒤에는 디지털 콘텐츠 특성상 환불이 제한될 수 있습니다. 이용권은 등록한 기기에서만 유효하며, 이용 기간이 끝나면 자동으로 무료 회원이 됩니다.</p>' +
+      '<button type="button" class="btn btn-ghost" id="payCancel" style="margin-top:10px">닫기</button>';
     openModal("payModal");
 
     $("#payCancel").addEventListener("click", function () { closeModal("payModal"); });
-    $("#payGo").addEventListener("click", function () {
-      var created = !currentUser();
-      if (created) ensureDemoAccount();
-      Billing.purchase(plan).then(function () {
-        closeModal("payModal");
-        emit();
-        renderMy();
-        toast(plan.name + " 체험 결제 완료 · 광고가 사라지고 기능이 열렸습니다" + (created ? " (체험 계정 생성)" : ""));
-      });
+    bindPayBox(body, "pay", function (r) {
+      closeModal("payModal");
+      toast(r.plan.name + " 이용권이 등록되었습니다" + (r.sub.expiresAt ? " · " + fmtDate(r.sub.expiresAt) + "까지" : " · 평생 이용"));
     });
   }
 
@@ -687,7 +881,7 @@
     var all = users();
     var u = all[email];
     if (!u) return formErr(err, "가입된 이메일이 없습니다. 회원가입 탭을 이용해 주세요.");
-    if (u.provider && u.provider !== "email") return formErr(err, "이 계정은 소셜 테스트 계정입니다. 아래 소셜 버튼으로 로그인해 주세요.");
+    if (u.provider && u.provider !== "email") return formErr(err, "이 계정은 이메일 로그인을 쓸 수 없습니다. 새로 가입해 주세요.");
     hashPass(pass, u.salt || "").then(function (hash) {
       if (hash !== u.pass) return formErr(err, "비밀번호가 맞지 않습니다.");
       save(K.session, { email: email, at: new Date().toISOString() });
@@ -695,24 +889,6 @@
       $("#loginForm").reset();
       afterLogin(u.birth || null);
     });
-  }
-
-  function socialLogin(provider) {
-    var email = provider + ".demo@unmyeong.test";
-    var all = users();
-    if (!all[email]) {
-      all[email] = {
-        email: email,
-        nick: provider === "kakao" ? "카카오 테스트" : "구글 테스트",
-        provider: provider, salt: null, pass: null, birth: "",
-        createdAt: new Date().toISOString()
-      };
-      save(K.users, all);
-    }
-    save(K.session, { email: email, at: new Date().toISOString() });
-    closeModal("authModal");
-    afterLogin(null);
-    toast("소셜 테스트 계정으로 로그인했습니다 · 실제 OAuth 연동 예정");
   }
 
   /* ───────── 렌더 총괄 ───────── */
@@ -751,9 +927,17 @@
     var lf = $("#loginForm"), sf = $("#signupForm");
     if (lf) lf.addEventListener("submit", signIn);
     if (sf) sf.addEventListener("submit", signUp);
-    $$("[data-social]").forEach(function (b) {
-      b.addEventListener("click", function () { socialLogin(b.getAttribute("data-social")); });
-    });
+
+    /* 멤버십·내 정보 탭 상단의 이용권 코드 상자 */
+    var topBox = $("#voucherTop");
+    if (topBox) {
+      topBox.innerHTML = voucherBoxHtml("top", "이용권 코드 등록");
+      bindPayBox(topBox, "top", function (r) {
+        if (r.kind === "wish") { toast("3일 소원 부적 이용권이 등록되었습니다"); return; }
+        toast(r.plan.name + " 이용권이 등록되었습니다" + (r.sub.expiresAt ? " · " + fmtDate(r.sub.expiresAt) + "까지" : " · 평생 이용"));
+      });
+    }
+    bindCopy(document);
 
     $$("[data-close]").forEach(function (b) {
       b.addEventListener("click", function () { closeModal(b.getAttribute("data-close")); });
@@ -778,6 +962,7 @@
     FEATURES: FEATURES,
     TIER_NAME: TIER_NAME,
     TIER_GATE: TIER_GATE,
+    BANK: BANK,
     Billing: Billing,
     tier: tier,
     has: has,
@@ -796,6 +981,14 @@
     openPay: openPay,
     refresh: emit,
     renderMy: renderMy,
+    /* 계좌이체·이용권 코드 (wish.js 등 다른 화면과 공유) */
+    bankBox: bankBoxHtml,
+    voucherBox: voucherBoxHtml,
+    bindPayBox: bindPayBox,
+    bindCopy: bindCopy,
+    redeem: redeemVoucher,
+    parseVoucher: parseVoucher,
+    usedCodes: usedCodes,
     modal: { open: openModal, close: closeModal },
     won: won,
     fmtDate: fmtDate,

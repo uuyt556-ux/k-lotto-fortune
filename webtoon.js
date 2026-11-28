@@ -202,7 +202,7 @@
     } else if (tier === "free") {
       add("pay:monthly", "복채 패스 6,900원으로 열기", "btn-gold");
       add("pay:annual", "1년 패스 59,000원 · 월 4,917원꼴", "btn-ghost");
-      note = "체험 결제 모드 · 실제 청구는 없어요";
+      note = "계좌이체 후 이용권 코드로 바로 열려요";
     } else if (tier === "monthly" || tier === "annual") {
       add("pay:vip_monthly", "황금 사주 패스 · 월 12,900원", "btn-gold");
       add("pay:vip_lifetime", "평생 89,000원 · 한 번만", "btn-ghost");

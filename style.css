@@ -771,12 +771,72 @@ select:disabled { opacity: .55; }
 .lucky-cta small { display: block; font-size: 10px; color: var(--meok-3); }
 .lucky-cta .btn { padding: 8px 12px; font-size: 12px; }
 
-/* ───── 체험 결제 모달 ───── */
+/* ───── 계좌이체 · 이용권 코드 (결제 모달 · 멤버십 상단) ───── */
 #payBody { text-align: left; }
 .pay-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 2px 0 11px; padding-bottom: 9px; border-bottom: 1px dashed var(--line-gold); }
 .pay-name { font-family: var(--serif); font-size: 15px; font-weight: 700; }
 .pay-price { font-size: 11.5px; color: var(--meok-3); }
 .pay-price b { font-family: var(--serif); font-size: 19px; color: var(--gold-d); margin-right: 2px; }
+
+.pay-intro {
+  border: 1px solid var(--line-gold); border-radius: 12px;
+  background: linear-gradient(180deg, rgba(201, 151, 44, .1), rgba(201, 151, 44, .035));
+  padding: 11px 12px; margin-bottom: 12px;
+}
+.pay-intro > b { display: block; font-family: var(--serif); font-size: 12.5px; color: var(--gold-d); margin-bottom: 4px; letter-spacing: .2px; }
+.pay-intro p { margin: 0 0 8px; font-size: 11px; color: var(--meok-2); line-height: 1.62; }
+.bank-mini { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--meok-2); }
+.bank-mini b { font-family: var(--serif); font-size: 12.5px; color: var(--meok); letter-spacing: .3px; }
+
+.bank-box {
+  border: 1px solid var(--line-gold); border-radius: 12px; overflow: hidden;
+  background: #FFFDF6; margin: 10px 0 0;
+}
+.bank-title {
+  font-family: var(--serif); font-size: 12px; font-weight: 700; letter-spacing: .3px;
+  color: #4A3600; background: linear-gradient(180deg, rgba(201, 151, 44, .22), rgba(201, 151, 44, .1));
+  padding: 7px 11px; border-bottom: 1px solid rgba(201, 151, 44, .28);
+}
+.bank-row { display: flex; align-items: center; gap: 8px; padding: 7px 11px; font-size: 11.5px; border-bottom: 1px dashed rgba(201, 151, 44, .22); }
+.bank-row:last-child { border-bottom: 0; }
+.bank-row > span { flex: 0 0 58px; color: var(--meok-3); font-size: 11px; }
+.bank-row > b { color: var(--meok); font-size: 12.5px; }
+.bank-row .bank-acc { font-family: var(--serif); font-size: 15px; letter-spacing: .6px; color: var(--meok); }
+.bank-row.bank-amount { background: rgba(201, 151, 44, .07); }
+.bank-row.bank-amount > b { font-family: var(--serif); font-size: 17px; color: var(--juhong); }
+.bank-copy {
+  margin-left: auto; flex: 0 0 auto; font-family: inherit; font-size: 10.5px; font-weight: 600;
+  color: #4A3600; background: linear-gradient(150deg, #F3DFA8, #DDB664);
+  border: 1px solid rgba(160, 118, 30, .45); border-radius: 999px; padding: 4px 10px;
+  cursor: pointer; white-space: nowrap;
+}
+.bank-copy:active { transform: translateY(1px); }
+.pay-guide { margin: 9px 0 0; font-size: 11px; color: var(--meok-2); line-height: 1.65; }
+.pay-guide a { color: var(--gold-d); text-decoration: underline; text-underline-offset: 2px; }
+
+.voucher-box {
+  margin-top: 12px; padding: 11px 12px; border-radius: 12px;
+  border: 1px dashed rgba(43, 110, 108, .42); background: rgba(43, 110, 108, .05);
+}
+.voucher-title { font-family: var(--serif); font-size: 12px; font-weight: 700; color: var(--cheongja); letter-spacing: .2px; margin-bottom: 7px; }
+.voucher-row { display: flex; gap: 7px; }
+.voucher-input {
+  flex: 1 1 auto; min-width: 0; font-family: var(--serif); font-size: 14px; letter-spacing: 1.4px; text-transform: uppercase;
+  padding: 9px 11px; border-radius: 9px; border: 1px solid rgba(43, 110, 108, .35);
+  background: #FFFEFA; color: var(--meok);
+}
+.voucher-input::placeholder { letter-spacing: .6px; color: #A9A296; font-size: 12.5px; }
+.voucher-input:focus { outline: none; border-color: var(--cheongja); box-shadow: 0 0 0 2px rgba(43, 110, 108, .16); }
+.voucher-btn {
+  flex: 0 0 auto; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .2px;
+  color: #F6FBF9; background: linear-gradient(160deg, #3A827F, #1F5856);
+  border: 0; border-radius: 9px; padding: 0 16px; cursor: pointer;
+}
+.voucher-btn:active { transform: translateY(1px); }
+.voucher-msg { margin: 7px 0 0; font-size: 11px; line-height: 1.55; }
+.voucher-msg.err { color: #A7321F; }
+.voucher-msg.ok { color: var(--cheongja); }
+.plan-foot { margin: 9px 0 0; font-size: 10.5px; color: var(--meok-3); line-height: 1.5; }
 
 /* ───── VIP 금박 테마 ───── */
 body.vip-theme .card { border-color: rgba(201, 151, 44, .5); }

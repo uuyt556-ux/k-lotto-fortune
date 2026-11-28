@@ -560,7 +560,7 @@
           "<p>월 6,900원 <b>복채 패스</b>부터 매주 토요일 추첨 회차 기준 <b>복채 5조합</b>이 자동으로 발급됩니다. 회차별 보관함에 그대로 남아 다음 주에도 다시 열어 볼 수 있습니다.</p>" +
           '<div class="ghost-row">' + new Array(7).join('<span class="ball small ghost">?</span>') + "</div>" +
           '<button type="button" class="btn btn-gold" data-open-plans style="margin-top:12px">복채 패스 보고 열기</button>' +
-          '<p class="tiny">베타 테스트 모드에서는 ‘체험 결제’를 누르면 바로 발급됩니다. 실제 청구는 없습니다.</p>' +
+          '<p class="tiny">이용권 코드를 등록하면 이번 주 복채 5조합이 바로 발급됩니다.</p>' +
         "</div>";
       return;
     }
@@ -673,7 +673,7 @@
     var sec = 3, total = 3;
     $("#adSec").textContent = sec;
     $("#adDone").disabled = true;
-    $("#adDone").textContent = "광고 시청 중…";
+    $("#adDone").textContent = "준비 중…";
     var arc = $("#adArc");
     arc.setAttribute("stroke-dashoffset", "0");
     clearInterval(adTimer);
@@ -697,7 +697,7 @@
     clearInterval(adTimer);
     $("#adModal").classList.remove("show");
     $("#adTitle").textContent = "복채를 받는 중";
-    $("#adDesc").textContent = "짧은 광고가 끝나면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.";
+    $("#adDesc").textContent = "짧게 기다리면 오늘의 황금 5조합과 상세 사주 리포트가 열립니다.";
   }
   function unlock() {
     state.unlocked = true;

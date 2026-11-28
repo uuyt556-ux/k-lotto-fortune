@@ -1,6 +1,6 @@
 /*! wish.js — 3일 소원 부적·카드 (단건 상품 · 1건 10,000원)
  *  · 소원 1가지를 사주·오행 기운과 엮어 한국 전통 무드의 부적 카드로 그립니다 (canvas 1080×1440).
- *  · 구독 요금제와 별개의 단건 상품: 미리보기(워터마크·잠금) → 10,000원 테스트 결제 → 고해상도 원본 저장·공유.
+ *  · 구독 요금제와 별개의 단건 상품: 미리보기(워터마크·잠금) → 계좌이체 10,000원 · 이용권 코드 등록 → 고해상도 원본 저장·공유.
  *  · 갤러리 저장: canvas PNG + <a download> / Web Share API / 길게 눌러 저장 안내
  */
 (function (global) {
@@ -12,7 +12,7 @@
   var FILE_NAME = "복채로또_3일소원부적.png";
   var PRICE = 10000;
 
-  var state = { wish: "", paid: false, blob: null, busy: false };
+  var state = { wish: "", paid: false, blob: null, busy: false, credit: 0 };
 
   function $(s) { return document.querySelector(s); }
   function pad(n) { return String(n).padStart(2, "0"); }
@@ -399,7 +399,7 @@
     if (hint) {
       hint.innerHTML = state.paid
         ? "고해상도(1080×1440) 원본입니다 · 이미지를 길게 눌러 ‘이미지 저장’도 가능해요"
-        : "미리보기에는 워터마크가 들어갑니다 · 10,000원 결제 후 원본 저장·공유가 열립니다";
+        : "미리보기에는 워터마크가 들어갑니다 · 10,000원 이용권 등록 후 원본 저장·공유가 열립니다";
     }
     var tag = $("#wishPrice");
     if (tag) tag.textContent = state.paid ? "소장 완료" : "1건 10,000원";
@@ -411,7 +411,9 @@
     if (!wish) { toast("소원을 한 줄 적어 주세요"); if (input) input.focus(); return; }
     if (wish.length > 40) { toast("소원은 40자까지 적을 수 있어요"); return; }
     state.wish = wish;
-    state.paid = false;
+    /* 이용권을 먼저 등록해 둔 경우에는 첫 카드부터 열어 줍니다 (등록 1건 = 카드 1장) */
+    state.paid = !!(state.credit > 0);
+    if (state.paid) state.credit = 0;
     render();
     lockUi();
     var out = $("#wishOut");
@@ -420,47 +422,59 @@
     if (out) setTimeout(function () { out.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120);
   }
 
-  /* ───────── 단건 결제 (테스트 모드) ───────── */
+  /* ───────── 단건 상품 결제 (계좌이체 + 이용권 코드) ───────── */
   function openBuy() {
     var body = document.getElementById("payBody");
     var modal = document.getElementById("payModal");
-    if (!body || !modal) return;
-    var token = "WISH-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+    var M = global.Membership;
+    if (!body || !modal || !M || !M.bankBox) return;
     body.innerHTML =
       '<div class="pay-head"><span class="pay-name">3일 소원 부적·카드</span>' +
         '<span class="pay-price"><b>' + won(PRICE) + "</b>원 / 1건</span></div>" +
       '<div class="kv-list">' +
-        "<div class=\"kv\"><span>상품 구분</span><b>단건 상품 (구독 요금제와 별도)</b></div>" +
         "<div class=\"kv\"><span>제공 내용</span><b>부적 카드 이미지 1080×1440 PNG 1장</b></div>" +
-        "<div class=\"kv\"><span>소원 문구</span><b>" + (state.wish || "-") + "</b></div>" +
+        "<div class=\"kv\"><span>소원 문구</span><b>" + escTxt(state.wish || "-") + "</b></div>" +
         "<div class=\"kv\"><span>이용 기간</span><b>3일 성취 기원 · 저장 후 계속 소장</b></div>" +
-        "<div class=\"kv\"><span>결제 수단</span><b>테스트 결제 · 실제 청구 없음</b></div>" +
-        "<div class=\"kv\"><span>주문번호</span><b>" + token + "</b></div>" +
       "</div>" +
+      M.bankBox(PRICE) +
+      M.voucherBox("wish", "입금 확인 후 받은 이용권 코드") +
       '<p class="tiny" style="text-align:left;margin-top:10px">' +
         "<b>디지털 콘텐츠 고지</b> — 결제 즉시 이미지가 제공되는 디지털 콘텐츠입니다. 제공이 시작된 뒤에는 청약철회(전액 환불)가 제한될 수 있습니다(전자상거래법 제17조 제2항). " +
-        "정식 출시 시 Google Play 인앱 결제의 단건 상품으로 청구되며, 이 경우 Google Play의 결제·환불 정책이 함께 적용됩니다. " +
-        "현재 화면은 실제로 청구되지 않는 베타 테스트 결제입니다." +
+        "이용권은 등록한 기기에서만 유효하며, 등록 1건에 카드 1장이 열립니다." +
       "</p>" +
-      '<button type="button" class="btn btn-gold" id="wishPayGo" style="margin-top:10px">10,000원 결제하고 소장하기 (테스트)</button>' +
-      '<button type="button" class="btn btn-ghost" id="wishPayCancel" style="margin-top:8px">취소</button>';
+      '<button type="button" class="btn btn-ghost" id="wishPayCancel" style="margin-top:10px">닫기</button>';
     modal.classList.add("show");
 
     var cancel = document.getElementById("wishPayCancel");
     if (cancel) cancel.addEventListener("click", function () { modal.classList.remove("show"); });
-    var go = document.getElementById("wishPayGo");
-    if (go) go.addEventListener("click", function () {
-      var orders = load(K.orders, []) || [];
-      orders.unshift({
-        orderId: token, product: "3일 소원 부적·카드", price: PRICE, currency: "KRW",
-        wish: state.wish, mode: "test", at: new Date().toISOString()
-      });
-      store(K.orders, orders.slice(0, 50));
+    M.bindPayBox(body, "wish", function () { modal.classList.remove("show"); });
+  }
+
+  /* 이용권(W) 등록 시 account.js 가 호출 — 이 기기의 부적 카드 잠금을 풉니다 (1건 = 카드 1장) */
+  function grant(code) {
+    var orders = load(K.orders, []) || [];
+    orders.unshift({
+      orderId: "VC-" + (code || ""), product: "3일 소원 부적·카드", price: PRICE, currency: "KRW",
+      wish: state.wish, mode: "voucher", at: new Date().toISOString()
+    });
+    store(K.orders, orders.slice(0, 50));
+    var modal = document.getElementById("payModal");
+    if (modal) modal.classList.remove("show");
+    var out = $("#wishOut");
+    if (out && !out.hidden) {
       state.paid = true;
       render();
       lockUi();
-      modal.classList.remove("show");
-      toast("결제 완료 · 원본 부적 카드가 열렸습니다 (테스트 결제)");
+      toast("이용권이 등록되었습니다 · 원본 부적 카드를 저장할 수 있어요");
+    } else {
+      state.credit = (state.credit || 0) + 1;
+      toast("3일 소원 부적 이용권이 등록되었습니다 · 소원을 적으면 바로 열립니다");
+    }
+  }
+
+  function escTxt(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 
@@ -546,6 +560,7 @@
     issue: issue,
     buy: openBuy,
     draw: draw,
+    grant: grant,
     isPaid: function () { return state.paid; }
   };
 
